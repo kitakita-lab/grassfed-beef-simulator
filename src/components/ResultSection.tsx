@@ -1,9 +1,78 @@
-import type { FormData, CalculationResult } from '../types';
-import { getChannelHints, formatCurrency, formatPercent } from '../utils/calculator';
+import type { FormData, CalculationResult, WholesaleResult } from '../types';
+import { getChannelHints, formatCurrency, formatPercent, calculateWholesale } from '../utils/calculator';
 
 interface Props {
   formData: FormData;
   result: CalculationResult | null;
+}
+
+function WholesalePanel({
+  wr,
+  minPerKg,
+  recPerKg,
+  brandPerKg,
+}: {
+  wr: WholesaleResult;
+  minPerKg: number;
+  recPerKg: number;
+  brandPerKg: number;
+}) {
+  return (
+    <div className="wholesale-panel">
+      <div className="wholesale-panel-header">
+        🏪 卸チャネル補足情報
+      </div>
+      <div className="wholesale-panel-meta">
+        <span className="wholesale-meta-item">
+          卸先掛け率: <strong>{(wr.wholesaleRateDecimal * 100).toFixed(0)}%</strong>
+        </span>
+        <span className="wholesale-meta-item">
+          卸先想定粗利率: <strong>{formatPercent(wr.retailerGrossMarginDecimal)}</strong>
+        </span>
+      </div>
+
+      {/* 卸価格 vs 想定小売価格 比較表 */}
+      <div style={{ padding: '0 4px 4px' }}>
+        <div className="annual-table-scroll">
+          <table className="annual-table">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th className="col-min">🔴 最低</th>
+                <th className="col-rec">🔵 推奨</th>
+                <th className="col-brand">🟡 ブランド</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>卸価格 /kg</td>
+                <td className="col-min">{formatCurrency(minPerKg)}</td>
+                <td className="col-rec">{formatCurrency(recPerKg)}</td>
+                <td className="col-brand">{formatCurrency(brandPerKg)}</td>
+              </tr>
+              <tr>
+                <td>想定小売価格 /kg</td>
+                <td className="col-min">{formatCurrency(wr.minimumRetailPricePerKg)}</td>
+                <td className="col-rec">{formatCurrency(wr.recommendedRetailPricePerKg)}</td>
+                <td className="col-brand">{formatCurrency(wr.brandRetailPricePerKg)}</td>
+              </tr>
+              <tr>
+                <td>想定小売価格 /100g</td>
+                <td className="col-min">{formatCurrency(wr.minimumRetailPricePer100g)}</td>
+                <td className="col-rec">{formatCurrency(wr.recommendedRetailPricePer100g)}</td>
+                <td className="col-brand">{formatCurrency(wr.brandRetailPricePer100g)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 店頭価格コメント */}
+      <div className={`wholesale-comment ${wr.retailPriceLevel}`}>
+        💬 {wr.retailPriceComment}
+      </div>
+    </div>
+  );
 }
 
 function PriceCard({
@@ -156,6 +225,11 @@ export default function ResultSection({ formData, result }: Props) {
     annualBrandCost,
   } = result;
 
+  const wholesaleResult: WholesaleResult | null =
+    formData.salesChannel === '卸' && formData.wholesaleRate > 0
+      ? calculateWholesale(result, formData.wholesaleRate)
+      : null;
+
   return (
     <div className="results-area">
       <div className="result-intro">
@@ -201,6 +275,16 @@ export default function ResultSection({ formData, result }: Props) {
           comment={`有機認証・グラスフェッド・少頭数育成の価値を守るブランド価格です（${formData.priceStrategy}戦略）。`}
         />
       </div>
+
+      {/* 卸チャネル補足パネル */}
+      {wholesaleResult && (
+        <WholesalePanel
+          wr={wholesaleResult}
+          minPerKg={minimumPricePerKg}
+          recPerKg={recommendedPricePerKg}
+          brandPerKg={brandPricePerKg}
+        />
+      )}
 
       {/* コスト内訳 */}
       <div className="summary-card">

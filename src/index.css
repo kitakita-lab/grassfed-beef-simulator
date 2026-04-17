@@ -130,6 +130,63 @@ body {
   }
 }
 
+/* ─── Wholesale rate field ─── */
+.wholesale-rate-field {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #fdf8ec;
+  border: 1.5px solid #e8d898;
+  border-radius: 8px;
+}
+
+/* ─── Wholesale panel (結果エリア) ─── */
+.wholesale-panel {
+  background: var(--color-surface);
+  border: 1.5px solid #d4b860;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.wholesale-panel-header {
+  padding: 13px 18px;
+  background: #fdf5d8;
+  border-bottom: 1px solid #e8d898;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #7a5c00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wholesale-panel-meta {
+  padding: 10px 18px 6px;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.wholesale-meta-item strong {
+  color: var(--color-text);
+}
+
+.wholesale-comment {
+  margin: 4px 18px 14px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  border-left: 4px solid;
+}
+.wholesale-comment.low     { background: #fef0f0; border-color: #e74c3c; color: #8b1a1a; }
+.wholesale-comment.normal  { background: #f0f7f1; border-color: var(--color-accent); color: var(--color-hint); }
+.wholesale-comment.premium { background: #eef5fc; border-color: #2980b9; color: #1a4a6b; }
+.wholesale-comment.ultra   { background: #fdf8ec; border-color: var(--color-gold); color: #7a5c00; }
+
 /* ─── Guide card (初期未入力状態) ─── */
 .guide-card {
   background: linear-gradient(135deg, #f0f7f1 0%, #f8f6f1 100%);

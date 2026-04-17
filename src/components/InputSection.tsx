@@ -148,6 +148,18 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             ))}
           </div>
         </div>
+        {formData.salesChannel === '卸' && (
+          <div className="wholesale-rate-field">
+            <NumField
+              label="卸先掛け率（想定）"
+              hint="卸価格 ÷ 想定小売価格。食品卸の一般的な目安: 65〜75%"
+              unit="%"
+              value={formData.wholesaleRate}
+              step={5}
+              onChange={(v) => onChange('wholesaleRate', v)}
+            />
+          </div>
+        )}
       </Section>
 
       {/* B. 飼養コスト */}

@@ -4,6 +4,8 @@ import type {
   RoundingMode,
   PriceStrategy,
   ValidationWarning,
+  WholesaleResult,
+  RetailPriceLevel,
 } from '../types';
 
 const PSYCHOLOGY_PRICES_100G = [398, 480, 580, 680, 780, 880, 980, 1180, 1280, 1480];
@@ -257,4 +259,66 @@ export function formatCurrency(value: number): string {
 
 export function formatPercent(value: number): string {
   return (value * 100).toFixed(1) + '%';
+}
+
+// 想定小売価格を10円単位に丸める（卸先が端数を調整するため参考値として）
+function roundRetail(price: number): number {
+  return Math.round(price / 10) * 10;
+}
+
+function getRetailPriceLevel(pricePerKg: number): RetailPriceLevel {
+  if (pricePerKg < 5000) return 'low';
+  if (pricePerKg < 8000) return 'normal';
+  if (pricePerKg < 12000) return 'premium';
+  return 'ultra';
+}
+
+function getRetailPriceComment(level: RetailPriceLevel, pricePerKg: number): string {
+  const priceLabel = formatCurrency(Math.round(pricePerKg / 100) * 100);
+  switch (level) {
+    case 'low':
+      return `想定小売価格（${priceLabel}/kg）は一般スーパーの国産牛肉と競合する水準です。有機・グラスフェッドとしての付加価値訴求が重要になります。`;
+    case 'normal':
+      return `想定小売価格（${priceLabel}/kg）は有機・グラスフェッドビーフとして妥当な価格帯です。自然食品店・専門店での展開に適しています。`;
+    case 'premium':
+      return `想定小売価格（${priceLabel}/kg）は高品質ブランド牛として訴求できる価格帯です。百貨店・高級食品店向けの展開が適しています。`;
+    case 'ultra':
+      return `想定小売価格（${priceLabel}/kg）はプレミアム価格帯です。希少性とブランドストーリーが価格を支える必要があります。`;
+  }
+}
+
+export function calculateWholesale(
+  result: CalculationResult,
+  wholesaleRate: number,
+): WholesaleResult {
+  const wholesaleRateDecimal = wholesaleRate / 100;
+  const retailerGrossMarginDecimal = 1 - wholesaleRateDecimal;
+
+  // 小売価格 = 卸価格 ÷ 掛け率
+  const minimumRetailPricePerKg =
+    wholesaleRateDecimal > 0 ? roundRetail(result.minimumPricePerKg / wholesaleRateDecimal) : 0;
+  const recommendedRetailPricePerKg =
+    wholesaleRateDecimal > 0 ? roundRetail(result.recommendedPricePerKg / wholesaleRateDecimal) : 0;
+  const brandRetailPricePerKg =
+    wholesaleRateDecimal > 0 ? roundRetail(result.brandPricePerKg / wholesaleRateDecimal) : 0;
+
+  const minimumRetailPricePer100g = Math.round(minimumRetailPricePerKg / 10);
+  const recommendedRetailPricePer100g = Math.round(recommendedRetailPricePerKg / 10);
+  const brandRetailPricePer100g = Math.round(brandRetailPricePerKg / 10);
+
+  const retailPriceLevel = getRetailPriceLevel(recommendedRetailPricePerKg);
+  const retailPriceComment = getRetailPriceComment(retailPriceLevel, recommendedRetailPricePerKg);
+
+  return {
+    wholesaleRateDecimal,
+    retailerGrossMarginDecimal,
+    minimumRetailPricePerKg,
+    recommendedRetailPricePerKg,
+    brandRetailPricePerKg,
+    minimumRetailPricePer100g,
+    recommendedRetailPricePer100g,
+    brandRetailPricePer100g,
+    retailPriceLevel,
+    retailPriceComment,
+  };
 }
