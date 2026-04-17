@@ -37,6 +37,7 @@ export const DEFAULT_FORM_DATA: FormData = {
   annualTargetProfit: 0,
   priceStrategy: '標準',
   roundingMode: '100円単位',
+  wholesaleRate: 70,
 };
 
 export const SAMPLE_FORM_DATA: FormData = {
@@ -67,6 +68,7 @@ export const SAMPLE_FORM_DATA: FormData = {
   annualTargetProfit: 0,
   priceStrategy: '標準',
   roundingMode: '100円単位',
+  wholesaleRate: 70,
 };
 
 export function saveToStorage(data: FormData, hasInteracted: boolean): void {

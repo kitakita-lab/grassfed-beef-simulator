@@ -48,6 +48,24 @@ export interface FormData {
 
   // G. 丸め設定
   roundingMode: RoundingMode;
+
+  // H. 卸チャネル設定
+  wholesaleRate: number; // 卸先掛け率（%）例: 70 → 70%
+}
+
+export type RetailPriceLevel = 'low' | 'normal' | 'premium' | 'ultra';
+
+export interface WholesaleResult {
+  wholesaleRateDecimal: number;
+  retailerGrossMarginDecimal: number;
+  minimumRetailPricePerKg: number;
+  recommendedRetailPricePerKg: number;
+  brandRetailPricePerKg: number;
+  minimumRetailPricePer100g: number;
+  recommendedRetailPricePer100g: number;
+  brandRetailPricePer100g: number;
+  retailPriceLevel: RetailPriceLevel;
+  retailPriceComment: string;
 }
 
 export interface CalculationResult {
