@@ -130,6 +130,39 @@ body {
   }
 }
 
+/* ─── Guide card (初期未入力状態) ─── */
+.guide-card {
+  background: linear-gradient(135deg, #f0f7f1 0%, #f8f6f1 100%);
+  border: 1.5px solid #b8d8bb;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.guide-card-body {
+  padding: 16px 18px;
+}
+
+.guide-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-primary-dk);
+  margin-bottom: 10px;
+}
+
+.guide-card-list {
+  list-style: none;
+  font-size: 0.83rem;
+  color: var(--color-hint);
+  line-height: 1.8;
+}
+
+.guide-card-list li::before {
+  content: '→ ';
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
 /* ─── Sections ─── */
 .section-card {
   background: var(--color-surface);
@@ -466,7 +499,7 @@ body {
 }
 .annual-table {
   width: 100%;
-  min-width: 400px;
+  min-width: 340px;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
