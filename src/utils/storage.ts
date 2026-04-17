@@ -1,6 +1,13 @@
 import type { FormData } from '../types';
 
-const STORAGE_KEY = 'grassfed_beef_simulator_v1';
+// v2: formData と hasInteracted をまとめて保存する形式に変更
+// v1 のキーは別名なので自動的に無視される
+const STORAGE_KEY = 'grassfed_beef_simulator_v2';
+
+interface StoredState {
+  formData: Partial<FormData>;
+  hasInteracted: boolean;
+}
 
 export const DEFAULT_FORM_DATA: FormData = {
   numberOfHeads: 0,
@@ -62,20 +69,24 @@ export const SAMPLE_FORM_DATA: FormData = {
   roundingMode: '100円単位',
 };
 
-export function saveToStorage(data: FormData): void {
+export function saveToStorage(data: FormData, hasInteracted: boolean): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const stored: StoredState = { formData: data, hasInteracted };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch {
     // localStorage unavailable
   }
 }
 
-export function loadFromStorage(): FormData | null {
+export function loadFromStorage(): { formData: FormData; hasInteracted: boolean } | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<FormData>;
-    return { ...DEFAULT_FORM_DATA, ...parsed };
+    const parsed = JSON.parse(raw) as Partial<StoredState>;
+    return {
+      formData: { ...DEFAULT_FORM_DATA, ...(parsed.formData ?? {}) },
+      hasInteracted: parsed.hasInteracted ?? false,
+    };
   } catch {
     return null;
   }
