@@ -254,9 +254,9 @@ export default function ResultSection({ formData, result }: Props) {
             <thead>
               <tr>
                 <th>項目</th>
-                <th className="col-min">最低価格</th>
-                <th className="col-rec">推奨価格</th>
-                <th className="col-brand">ブランド価格</th>
+                <th className="col-min">🔴 最低</th>
+                <th className="col-rec">🔵 推奨</th>
+                <th className="col-brand">🟡 ブランド</th>
               </tr>
             </thead>
             <tbody>

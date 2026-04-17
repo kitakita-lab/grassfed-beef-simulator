@@ -6,28 +6,35 @@ import InputSection from './components/InputSection';
 import ResultSection from './components/ResultSection';
 
 export default function App() {
+  // localStorage に保存済みデータがあればそこから復元し、isDirty=true にする
   const [formData, setFormData] = useState<FormData>(() => {
-    return loadFromStorage() ?? DEFAULT_FORM_DATA;
+    const saved = loadFromStorage();
+    return saved ?? DEFAULT_FORM_DATA;
   });
+  const [isDirty, setIsDirty] = useState(() => loadFromStorage() !== null);
 
   const result = calculate(formData);
-  const warnings = validate(formData);
+  // バリデーション警告は isDirty になってから表示する
+  const warnings = isDirty ? validate(formData) : [];
 
   useEffect(() => {
     saveToStorage(formData);
   }, [formData]);
 
   const handleChange = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
+    setIsDirty(true);
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const handleSample = () => {
+    setIsDirty(true);
     setFormData(SAMPLE_FORM_DATA);
   };
 
   const handleReset = () => {
     if (window.confirm('入力値をすべてリセットしますか？')) {
       setFormData(DEFAULT_FORM_DATA);
+      setIsDirty(false);
     }
   };
 
@@ -62,6 +69,7 @@ export default function App() {
           formData={formData}
           onChange={handleChange}
           warnings={warnings}
+          isDirty={isDirty}
         />
         <ResultSection
           formData={formData}

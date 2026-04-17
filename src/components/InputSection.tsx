@@ -5,6 +5,7 @@ interface Props {
   formData: FormData;
   onChange: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
   warnings: ValidationWarning[];
+  isDirty: boolean;
 }
 
 function NumField({
@@ -79,10 +80,21 @@ const CHANNELS: SalesChannel[] = ['直販', '卸', 'ふるさと納税', 'イベ
 const STRATEGIES: PriceStrategy[] = ['控えめ', '標準', '高付加価値'];
 const ROUNDING_MODES: RoundingMode[] = ['1円単位', '10円単位', '100円単位', '100g単価心理価格', '1kg単価心理価格'];
 
-export default function InputSection({ formData, onChange, warnings }: Props) {
+export default function InputSection({ formData, onChange, warnings, isDirty }: Props) {
   return (
     <div className="input-area">
-      {warnings.length > 0 && (
+      {!isDirty ? (
+        <div className="guide-card">
+          <div className="guide-card-body">
+            <p className="guide-card-title">🌱 まず基本情報とコストを入力してください</p>
+            <ul className="guide-card-list">
+              <li>年間出荷予定頭数と可食販売量を入力すると計算が始まります</li>
+              <li>「サンプルを入力」で北海道・18頭規模の数値例を確認できます</li>
+              <li>入力値はブラウザに自動保存され、次回も引き続き使えます</li>
+            </ul>
+          </div>
+        </div>
+      ) : warnings.length > 0 ? (
         <div className="warnings">
           {warnings.map((w, i) => (
             <div key={i} className={`warning-item ${w.type}`}>
@@ -91,7 +103,7 @@ export default function InputSection({ formData, onChange, warnings }: Props) {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* A. 基本情報 */}
       <Section icon="🐄" title="A. 基本情報" defaultOpen>
