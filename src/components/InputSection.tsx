@@ -5,7 +5,7 @@ interface Props {
   formData: FormData;
   onChange: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
   warnings: ValidationWarning[];
-  isDirty: boolean;
+  hasInteracted: boolean;
 }
 
 function NumField({
@@ -80,10 +80,10 @@ const CHANNELS: SalesChannel[] = ['直販', '卸', 'ふるさと納税', 'イベ
 const STRATEGIES: PriceStrategy[] = ['控えめ', '標準', '高付加価値'];
 const ROUNDING_MODES: RoundingMode[] = ['1円単位', '10円単位', '100円単位', '100g単価心理価格', '1kg単価心理価格'];
 
-export default function InputSection({ formData, onChange, warnings, isDirty }: Props) {
+export default function InputSection({ formData, onChange, warnings, hasInteracted }: Props) {
   return (
     <div className="input-area">
-      {!isDirty ? (
+      {!hasInteracted ? (
         <div className="guide-card">
           <div className="guide-card-body">
             <p className="guide-card-title">🌱 まず基本情報とコストを入力してください</p>

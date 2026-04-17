@@ -6,35 +6,40 @@ import InputSection from './components/InputSection';
 import ResultSection from './components/ResultSection';
 
 export default function App() {
-  // localStorage に保存済みデータがあればそこから復元し、isDirty=true にする
   const [formData, setFormData] = useState<FormData>(() => {
-    const saved = loadFromStorage();
-    return saved ?? DEFAULT_FORM_DATA;
+    return loadFromStorage()?.formData ?? DEFAULT_FORM_DATA;
   });
-  const [isDirty, setIsDirty] = useState(() => loadFromStorage() !== null);
+  // hasInteracted は localStorage から復元する。
+  // これにより「リセット後に再読み込み」しても false が維持される。
+  const [hasInteracted, setHasInteracted] = useState<boolean>(() => {
+    return loadFromStorage()?.hasInteracted ?? false;
+  });
 
   const result = calculate(formData);
-  // バリデーション警告は isDirty になってから表示する
-  const warnings = isDirty ? validate(formData) : [];
+  // バリデーション警告は hasInteracted になって初めて表示する
+  const warnings = hasInteracted ? validate(formData) : [];
 
+  // formData と hasInteracted をまとめて保存
   useEffect(() => {
-    saveToStorage(formData);
-  }, [formData]);
+    saveToStorage(formData, hasInteracted);
+  }, [formData, hasInteracted]);
 
   const handleChange = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
-    setIsDirty(true);
+    setHasInteracted(true);
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const handleSample = () => {
-    setIsDirty(true);
+    setHasInteracted(true);
     setFormData(SAMPLE_FORM_DATA);
   };
 
   const handleReset = () => {
     if (window.confirm('入力値をすべてリセットしますか？')) {
       setFormData(DEFAULT_FORM_DATA);
-      setIsDirty(false);
+      setHasInteracted(false);
+      // React の useEffect より先に明示保存して再読み込み時も確実に false になるようにする
+      saveToStorage(DEFAULT_FORM_DATA, false);
     }
   };
 
@@ -69,7 +74,7 @@ export default function App() {
           formData={formData}
           onChange={handleChange}
           warnings={warnings}
-          isDirty={isDirty}
+          hasInteracted={hasInteracted}
         />
         <ResultSection
           formData={formData}
