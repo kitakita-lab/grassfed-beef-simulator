@@ -460,8 +460,13 @@ body {
 .summary-value.highlight { color: var(--color-primary-dk); font-size: 1rem; }
 
 /* ─── Annual table ─── */
+.annual-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .annual-table {
   width: 100%;
+  min-width: 400px;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
@@ -469,6 +474,7 @@ body {
   padding: 8px 10px;
   text-align: right;
   border-bottom: 1px solid #f0ece4;
+  white-space: nowrap;
 }
 .annual-table th:first-child, .annual-table td:first-child {
   text-align: left;

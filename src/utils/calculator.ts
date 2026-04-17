@@ -29,7 +29,8 @@ function roundPrice(price: number, mode: RoundingMode): number {
 
 function nearestPsychologyPrice(price: number, candidates: number[]): number {
   const valid = candidates.filter((p) => p >= price);
-  if (valid.length === 0) return candidates[candidates.length - 1];
+  // 全候補が価格より低い場合は心理価格を使わず100円単位に切り上げ（最低価格を下回らないよう）
+  if (valid.length === 0) return Math.ceil(price / 100) * 100;
   return Math.min(...valid);
 }
 

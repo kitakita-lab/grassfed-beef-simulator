@@ -249,6 +249,7 @@ export default function ResultSection({ formData, result }: Props) {
           <span>📅</span> 年間想定（{formData.annualShipmentHeads}頭出荷時）
         </div>
         <div className="summary-body" style={{ padding: '0 4px 4px' }}>
+          <div className="annual-table-scroll">
           <table className="annual-table">
             <thead>
               <tr>
@@ -291,6 +292,7 @@ export default function ResultSection({ formData, result }: Props) {
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

@@ -33,7 +33,7 @@ function NumField({
       <div className="field-input-wrap">
         <input
           type="number"
-          className="field-input"
+          className={`field-input${unit ? '' : ' no-unit'}`}
           value={value === 0 ? '' : value}
           placeholder="0"
           step={step}
