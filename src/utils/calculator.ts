@@ -6,7 +6,6 @@ import type {
   ValidationWarning,
   WholesaleResult,
   RetailPriceLevel,
-  DirectResult,
   EventResult,
   FurusatoResult,
 } from '../types';
@@ -34,11 +33,11 @@ function roundPrice(price: number, mode: RoundingMode): number {
 
 function nearestPsychologyPrice(price: number, candidates: number[]): number {
   const valid = candidates.filter((p) => p >= price);
-  // 全候補が価格より低い場合は心理価格を使わず100円単位に切り上げ（最低価格を下回らないよう）
   if (valid.length === 0) return Math.ceil(price / 100) * 100;
   return Math.min(...valid);
 }
 
+// calculate() の出力は「直販基準価格」。全チャネルの価格はここから派生する。
 export function calculate(data: FormData): CalculationResult | null {
   if (data.annualShipmentHeads <= 0 || data.meatWeightPerHead <= 0) return null;
 
@@ -243,7 +242,7 @@ export function getChannelHints(channel: string): string[] {
       return [
         'ふるさと納税は付加価値を乗せやすく、認証価値を返礼品に反映しやすいチャネルです。',
         '返礼品の設計（セット内容・重量・ストーリー）で差別化できます。',
-        'プラットフォーム手数料（通常20〜30%程度）を考慮した価格設定が必要です。',
+        'ポータル手数料・発送費・ギフト包装費を含めた費用回収設計が重要です。',
       ];
     case 'イベント販売':
       return [
@@ -264,178 +263,106 @@ export function formatPercent(value: number): string {
   return (value * 100).toFixed(1) + '%';
 }
 
-// 想定小売価格を10円単位に丸める（卸先が端数を調整するため参考値として）
-function roundRetail(price: number): number {
+function roundWholesale(price: number): number {
   return Math.round(price / 10) * 10;
 }
 
-function getRetailPriceLevel(pricePerKg: number): RetailPriceLevel {
+function getDirectPriceLevel(pricePerKg: number): RetailPriceLevel {
   if (pricePerKg < 5000) return 'low';
   if (pricePerKg < 8000) return 'normal';
   if (pricePerKg < 12000) return 'premium';
   return 'ultra';
 }
 
-function getRetailPriceComment(level: RetailPriceLevel, pricePerKg: number): string {
+function getDirectPriceComment(level: RetailPriceLevel, pricePerKg: number): string {
   const priceLabel = formatCurrency(Math.round(pricePerKg / 100) * 100);
   switch (level) {
     case 'low':
-      return `想定小売価格（${priceLabel}/kg）は一般スーパーの国産牛肉と競合する水準です。有機・グラスフェッドとしての付加価値訴求が重要になります。`;
+      return `直販基準価格（${priceLabel}/kg）は一般スーパーの国産牛肉と競合する水準です。有機・グラスフェッドとしての付加価値訴求が重要になります。`;
     case 'normal':
-      return `想定小売価格（${priceLabel}/kg）は有機・グラスフェッドビーフとして妥当な価格帯です。自然食品店・専門店での展開に適しています。`;
+      return `直販基準価格（${priceLabel}/kg）は有機・グラスフェッドビーフとして妥当な価格帯です。自然食品店・専門店での展開に適しています。`;
     case 'premium':
-      return `想定小売価格（${priceLabel}/kg）は高品質ブランド牛として訴求できる価格帯です。百貨店・高級食品店向けの展開が適しています。`;
+      return `直販基準価格（${priceLabel}/kg）は高品質ブランド牛として訴求できる価格帯です。百貨店・高級食品店向けの展開が適しています。`;
     case 'ultra':
-      return `想定小売価格（${priceLabel}/kg）はプレミアム価格帯です。希少性とブランドストーリーが価格を支える必要があります。`;
+      return `直販基準価格（${priceLabel}/kg）はプレミアム価格帯です。希少性とブランドストーリーが価格を支える必要があります。`;
   }
 }
 
+// ─── 卸チャネル価格計算 ───────────────────────────────────────────────────────
+// 卸価格 = 直販基準価格（calculate()出力）× 卸先掛け率
 export function calculateWholesale(
   result: CalculationResult,
   wholesaleRate: number,
+  meatWeightPerHead: number,
+  annualShipmentHeads: number,
 ): WholesaleResult {
   const wholesaleRateDecimal = wholesaleRate / 100;
   const retailerGrossMarginDecimal = 1 - wholesaleRateDecimal;
 
-  // 小売価格 = 卸価格 ÷ 掛け率
-  const minimumRetailPricePerKg =
-    wholesaleRateDecimal > 0 ? roundRetail(result.minimumPricePerKg / wholesaleRateDecimal) : 0;
-  const recommendedRetailPricePerKg =
-    wholesaleRateDecimal > 0 ? roundRetail(result.recommendedPricePerKg / wholesaleRateDecimal) : 0;
-  const brandRetailPricePerKg =
-    wholesaleRateDecimal > 0 ? roundRetail(result.brandPricePerKg / wholesaleRateDecimal) : 0;
+  // 卸価格 = 直販基準価格 × 掛け率
+  const minWsPerKg = roundWholesale(result.minimumPricePerKg * wholesaleRateDecimal);
+  const recWsPerKg = roundWholesale(result.recommendedPricePerKg * wholesaleRateDecimal);
+  const brandWsPerKg = roundWholesale(result.brandPricePerKg * wholesaleRateDecimal);
 
-  const minimumRetailPricePer100g = Math.round(minimumRetailPricePerKg / 10);
-  const recommendedRetailPricePer100g = Math.round(recommendedRetailPricePerKg / 10);
-  const brandRetailPricePer100g = Math.round(brandRetailPricePerKg / 10);
+  const minWsPer100g = Math.round(minWsPerKg / 10);
+  const recWsPer100g = Math.round(recWsPerKg / 10);
+  const brandWsPer100g = Math.round(brandWsPerKg / 10);
 
-  const retailPriceLevel = getRetailPriceLevel(recommendedRetailPricePerKg);
-  const retailPriceComment = getRetailPriceComment(retailPriceLevel, recommendedRetailPricePerKg);
+  const minWsHead = minWsPerKg * meatWeightPerHead;
+  const recWsHead = recWsPerKg * meatWeightPerHead;
+  const brandWsHead = brandWsPerKg * meatWeightPerHead;
+
+  // 卸利益: 卸価格売上 - 原価（EC手数料なし）
+  const minWsProfit = minWsHead - result.baseCost;
+  const recWsProfit = recWsHead - result.baseCost;
+  const brandWsProfit = brandWsHead - result.baseCost;
+
+  const minWsProfitRate = minWsHead > 0 ? minWsProfit / minWsHead : 0;
+  const recWsProfitRate = recWsHead > 0 ? recWsProfit / recWsHead : 0;
+  const brandWsProfitRate = brandWsHead > 0 ? brandWsProfit / brandWsHead : 0;
+
+  const directPriceLevel = getDirectPriceLevel(result.recommendedPricePerKg);
+  const directPriceComment = getDirectPriceComment(directPriceLevel, result.recommendedPricePerKg);
 
   return {
     wholesaleRateDecimal,
     retailerGrossMarginDecimal,
-    minimumRetailPricePerKg,
-    recommendedRetailPricePerKg,
-    brandRetailPricePerKg,
-    minimumRetailPricePer100g,
-    recommendedRetailPricePer100g,
-    brandRetailPricePer100g,
-    retailPriceLevel,
-    retailPriceComment,
-  };
-}
-
-// ─── 直販価格計算 ─────────────────────────────────────────────────────────────
-// 卸の想定小売参考価格 × directCoefficient（%）を基準に価格を算出する
-export function calculateDirect(
-  result: CalculationResult,
-  wholesaleRate: number,
-  directCoefficient: number,   // %入力（例: 90 → 0.90）
-  meatWeightPerHead: number,
-  annualShipmentHeads: number,
-  roundingMode: RoundingMode,
-): DirectResult {
-  const wsRateDecimal = wholesaleRate / 100;
-  const coeffDecimal = directCoefficient / 100;
-
-  // 卸想定小売参考価格（掛け率で逆算）
-  const minRetail = wsRateDecimal > 0 ? result.minimumPricePerKg / wsRateDecimal : result.minimumPricePerKg;
-  const recRetail = wsRateDecimal > 0 ? result.recommendedPricePerKg / wsRateDecimal : result.recommendedPricePerKg;
-  const brandRetail = wsRateDecimal > 0 ? result.brandPricePerKg / wsRateDecimal : result.brandPricePerKg;
-
-  // 直販価格 = 想定小売 × 係数、ただし卸価格（コスト床）以上を保証
-  let minPerKg = Math.max(result.minimumPricePerKg, minRetail * coeffDecimal);
-  let recPerKg = Math.max(result.minimumPricePerKg, recRetail * coeffDecimal);
-  let brandPerKg = Math.max(result.minimumPricePerKg, brandRetail * coeffDecimal);
-
-  let minPer100g: number;
-  let recPer100g: number;
-  let brandPer100g: number;
-
-  if (roundingMode === '100g単価心理価格') {
-    minPer100g = nearestPsychologyPrice(minPerKg / 10, PSYCHOLOGY_PRICES_100G);
-    recPer100g = nearestPsychologyPrice(recPerKg / 10, PSYCHOLOGY_PRICES_100G);
-    brandPer100g = nearestPsychologyPrice(brandPerKg / 10, PSYCHOLOGY_PRICES_100G);
-    minPerKg = minPer100g * 10;
-    recPerKg = recPer100g * 10;
-    brandPerKg = brandPer100g * 10;
-  } else if (roundingMode === '1kg単価心理価格') {
-    minPerKg = nearestPsychologyPrice(minPerKg, PSYCHOLOGY_PRICES_1KG);
-    recPerKg = nearestPsychologyPrice(recPerKg, PSYCHOLOGY_PRICES_1KG);
-    brandPerKg = nearestPsychologyPrice(brandPerKg, PSYCHOLOGY_PRICES_1KG);
-    minPer100g = minPerKg / 10;
-    recPer100g = recPerKg / 10;
-    brandPer100g = brandPerKg / 10;
-  } else {
-    minPerKg = roundPrice(minPerKg, roundingMode);
-    recPerKg = roundPrice(recPerKg, roundingMode);
-    brandPerKg = roundPrice(brandPerKg, roundingMode);
-    minPer100g = minPerKg / 10;
-    recPer100g = recPerKg / 10;
-    brandPer100g = brandPerKg / 10;
-  }
-
-  const { baseCost, feeRate } = result;
-  const minHead = minPerKg * meatWeightPerHead;
-  const recHead = recPerKg * meatWeightPerHead;
-  const brandHead = brandPerKg * meatWeightPerHead;
-
-  const minProfit = minHead * (1 - feeRate) - baseCost;
-  const recProfit = recHead * (1 - feeRate) - baseCost;
-  const brandProfit = brandHead * (1 - feeRate) - baseCost;
-
-  return {
-    coefficient: coeffDecimal,
-    wholesaleRetailRefPerKg: Math.round(recRetail / 10) * 10,
-    minimumPricePerKg: minPerKg,
-    recommendedPricePerKg: recPerKg,
-    brandPricePerKg: brandPerKg,
-    minimumPricePer100g: minPer100g,
-    recommendedPricePer100g: recPer100g,
-    brandPricePer100g: brandPer100g,
-    minimumHeadPrice: minHead,
-    recommendedHeadPrice: recHead,
-    brandHeadPrice: brandHead,
-    minimumProfit: minProfit,
-    recommendedProfit: recProfit,
-    brandProfit: brandProfit,
-    minimumProfitRate: minHead > 0 ? minProfit / minHead : 0,
-    recommendedProfitRate: recHead > 0 ? recProfit / recHead : 0,
-    brandProfitRate: brandHead > 0 ? brandProfit / brandHead : 0,
-    minimumAnnualRevenue: minHead * annualShipmentHeads,
-    recommendedAnnualRevenue: recHead * annualShipmentHeads,
-    brandAnnualRevenue: brandHead * annualShipmentHeads,
-    minimumAnnualProfit: minProfit * annualShipmentHeads,
-    recommendedAnnualProfit: recProfit * annualShipmentHeads,
-    brandAnnualProfit: brandProfit * annualShipmentHeads,
-    wholesaleRecommendedProfit: result.recommendedProfit,
+    minimumWholesalePricePerKg: minWsPerKg,
+    recommendedWholesalePricePerKg: recWsPerKg,
+    brandWholesalePricePerKg: brandWsPerKg,
+    minimumWholesalePricePer100g: minWsPer100g,
+    recommendedWholesalePricePer100g: recWsPer100g,
+    brandWholesalePricePer100g: brandWsPer100g,
+    minimumWholesaleHeadPrice: minWsHead,
+    recommendedWholesaleHeadPrice: recWsHead,
+    brandWholesaleHeadPrice: brandWsHead,
+    minimumWholesaleProfit: minWsProfit,
+    recommendedWholesaleProfit: recWsProfit,
+    brandWholesaleProfit: brandWsProfit,
+    minimumWholesaleProfitRate: minWsProfitRate,
+    recommendedWholesaleProfitRate: recWsProfitRate,
+    brandWholesaleProfitRate: brandWsProfitRate,
+    minimumWholesaleAnnualRevenue: minWsHead * annualShipmentHeads,
+    recommendedWholesaleAnnualRevenue: recWsHead * annualShipmentHeads,
+    brandWholesaleAnnualRevenue: brandWsHead * annualShipmentHeads,
+    minimumWholesaleAnnualProfit: minWsProfit * annualShipmentHeads,
+    recommendedWholesaleAnnualProfit: recWsProfit * annualShipmentHeads,
+    brandWholesaleAnnualProfit: brandWsProfit * annualShipmentHeads,
+    directPriceLevel,
+    directPriceComment,
   };
 }
 
 // ─── イベント販売価格計算 ─────────────────────────────────────────────────────
-// 直販ベース価格を100g単価心理価格に丸め、小ロットパック価格を算出する
+// 直販基準価格を100g心理価格に丸め、小ロットパック価格を算出する
 export function calculateEvent(
   result: CalculationResult,
-  wholesaleRate: number,
-  directCoefficient: number,
   meatWeightPerHead: number,
 ): EventResult {
-  const wsRateDecimal = wholesaleRate / 100;
-  const coeffDecimal = directCoefficient / 100;
-
-  const minRetail = wsRateDecimal > 0 ? result.minimumPricePerKg / wsRateDecimal : result.minimumPricePerKg;
-  const recRetail = wsRateDecimal > 0 ? result.recommendedPricePerKg / wsRateDecimal : result.recommendedPricePerKg;
-  const brandRetail = wsRateDecimal > 0 ? result.brandPricePerKg / wsRateDecimal : result.brandPricePerKg;
-
-  const minBase = Math.max(result.minimumPricePerKg, minRetail * coeffDecimal);
-  const recBase = Math.max(result.minimumPricePerKg, recRetail * coeffDecimal);
-  const brandBase = Math.max(result.minimumPricePerKg, brandRetail * coeffDecimal);
-
-  // イベント販売は常に100g単価心理価格丸め
-  const min100g = nearestPsychologyPrice(minBase / 10, PSYCHOLOGY_PRICES_100G);
-  const rec100g = nearestPsychologyPrice(recBase / 10, PSYCHOLOGY_PRICES_100G);
-  const brand100g = nearestPsychologyPrice(brandBase / 10, PSYCHOLOGY_PRICES_100G);
+  // 直販基準kg単価を100g心理価格に変換（イベントは常に心理価格丸め）
+  const min100g = nearestPsychologyPrice(result.minimumPricePerKg / 10, PSYCHOLOGY_PRICES_100G);
+  const rec100g = nearestPsychologyPrice(result.recommendedPricePerKg / 10, PSYCHOLOGY_PRICES_100G);
+  const brand100g = nearestPsychologyPrice(result.brandPricePerKg / 10, PSYCHOLOGY_PRICES_100G);
 
   const minPerKg = min100g * 10;
   const recPerKg = rec100g * 10;
@@ -476,60 +403,82 @@ export function calculateEvent(
 }
 
 // ─── ふるさと納税 必要寄附金額計算 ───────────────────────────────────────────
-// 調達原価を基に法定還元率・プラットフォーム手数料の両制約から必要寄附金額を算出する
+// 直販基準価格を返礼品価値として、2制約モデルで最低寄附金額を算出する
+// 制約1（還元率）: 寄附 >= 返礼品価値 / 目標還元率
+// 制約2（費用回収）: 寄附 >= (返礼品価値 + 固定費) / (1 - 率費合計)
+// 採用値: max(制約1, 制約2) を1,000円単位切り上げ
+type FurusatoInput = Pick<FormData,
+  | 'furusatoReturnRate'
+  | 'furusatoPortalFeeRate'
+  | 'furusatoPaymentFeeRate'
+  | 'furusatoOtherRateFee'
+  | 'furusatoPackagingCost'
+  | 'furusatoStorageCost'
+  | 'furusatoShippingCost'
+  | 'furusatoFulfillmentCost'
+  | 'furusatoOtherFixedCost'
+  | 'meatWeightPerHead'
+  | 'annualShipmentHeads'
+>;
+
 export function calculateFurusato(
   result: CalculationResult,
-  furusatoPlatformFeeRate: number,
-  furusatoReturnRate: number,
-  meatWeightPerHead: number,
-  annualShipmentHeads: number,
+  data: FurusatoInput,
 ): FurusatoResult {
-  const platformFeeDecimal = furusatoPlatformFeeRate / 100;
-  const returnRateDecimal = furusatoReturnRate / 100;
+  const returnRateDecimal = data.furusatoReturnRate / 100;
+  const rateFeeTotal =
+    (data.furusatoPortalFeeRate + data.furusatoPaymentFeeRate + data.furusatoOtherRateFee) / 100;
+  const fixedCostPerHead =
+    data.furusatoPackagingCost +
+    data.furusatoStorageCost +
+    data.furusatoShippingCost +
+    data.furusatoFulfillmentCost +
+    data.furusatoOtherFixedCost;
 
-  // 調達価格/kg（= 生産者が受け取りたい価格 = コスト計算結果のkg単価）
-  const minGiftPerKg = meatWeightPerHead > 0 ? result.minimumHeadPrice / meatWeightPerHead : 0;
-  const recGiftPerKg = meatWeightPerHead > 0 ? result.recommendedHeadPrice / meatWeightPerHead : 0;
-  const brandGiftPerKg = meatWeightPerHead > 0 ? result.brandHeadPrice / meatWeightPerHead : 0;
+  // パッケージ単位の寄附金額計算
+  function donationForPackage(pricePerKg: number, weightKg: number): number {
+    const giftValue = pricePerKg * weightKg;
+    // パッケージ分の固定費（頭全体の固定費を重量按分）
+    const fixedCostForPackage =
+      data.meatWeightPerHead > 0 ? fixedCostPerHead * (weightKg / data.meatWeightPerHead) : 0;
 
-  // 寄附金額の制約:
-  //   1. 還元率制約: 調達価格 / 寄附 <= 還元率 → 寄附 >= 調達価格 / 還元率
-  //   2. プラットフォーム手数料制約: 調達価格 <= 寄附 × (1 - 手数料率) → 寄附 >= 調達価格 / (1 - 手数料率)
-  function donationForGiftPerKg(giftPerKg: number, weightKg: number): number {
-    const giftValue = giftPerKg * weightKg;
     const d1 = returnRateDecimal > 0 ? giftValue / returnRateDecimal : Infinity;
-    const d2 = platformFeeDecimal < 1 ? giftValue / (1 - platformFeeDecimal) : Infinity;
-    return Math.ceil(Math.max(d1, d2) / 1000) * 1000; // 1,000円単位切り上げ
+    const d2 = rateFeeTotal < 1 ? (giftValue + fixedCostForPackage) / (1 - rateFeeTotal) : Infinity;
+    return Math.ceil(Math.max(d1, d2) / 1000) * 1000;
   }
 
-  // 有効制約の判定（推奨価格で評価）
-  const d1rec = returnRateDecimal > 0 ? recGiftPerKg / returnRateDecimal : 0;
-  const d2rec = platformFeeDecimal < 1 ? recGiftPerKg / (1 - platformFeeDecimal) : 0;
-  const activeConstraint: 'returnRate' | 'platformFee' = d1rec >= d2rec ? 'returnRate' : 'platformFee';
+  // 有効制約の判定（推奨価格×500gパッケージで評価）
+  const giftValue500gRec = result.recommendedPricePerKg * 0.5;
+  const fixedCost500g =
+    data.meatWeightPerHead > 0 ? fixedCostPerHead * (0.5 / data.meatWeightPerHead) : 0;
+  const d1rec = returnRateDecimal > 0 ? giftValue500gRec / returnRateDecimal : 0;
+  const d2rec = rateFeeTotal < 1 ? (giftValue500gRec + fixedCost500g) / (1 - rateFeeTotal) : 0;
+  const activeConstraint: 'returnRate' | 'costCoverage' = d1rec >= d2rec ? 'returnRate' : 'costCoverage';
 
-  // 1頭あたり寄附金額
-  const minDonationPerHead = donationForGiftPerKg(minGiftPerKg, meatWeightPerHead);
-  const recDonationPerHead = donationForGiftPerKg(recGiftPerKg, meatWeightPerHead);
-  const brandDonationPerHead = donationForGiftPerKg(brandGiftPerKg, meatWeightPerHead);
+  // 1頭分（全量）の寄附金額
+  const minDonationPerHead = donationForPackage(result.minimumPricePerKg, data.meatWeightPerHead);
+  const recDonationPerHead = donationForPackage(result.recommendedPricePerKg, data.meatWeightPerHead);
+  const brandDonationPerHead = donationForPackage(result.brandPricePerKg, data.meatWeightPerHead);
 
   return {
     returnRateDecimal,
-    platformFeeDecimal,
+    rateFeeTotal,
+    fixedCostPerHead,
     activeConstraint,
     minimumDonationPerHead: minDonationPerHead,
     recommendedDonationPerHead: recDonationPerHead,
     brandDonationPerHead: brandDonationPerHead,
-    minimum300g: donationForGiftPerKg(minGiftPerKg, 0.3),
-    recommended300g: donationForGiftPerKg(recGiftPerKg, 0.3),
-    brand300g: donationForGiftPerKg(brandGiftPerKg, 0.3),
-    minimum500g: donationForGiftPerKg(minGiftPerKg, 0.5),
-    recommended500g: donationForGiftPerKg(recGiftPerKg, 0.5),
-    brand500g: donationForGiftPerKg(brandGiftPerKg, 0.5),
-    minimum1kg: donationForGiftPerKg(minGiftPerKg, 1.0),
-    recommended1kg: donationForGiftPerKg(recGiftPerKg, 1.0),
-    brand1kg: donationForGiftPerKg(brandGiftPerKg, 1.0),
-    minimumAnnualRevenue: result.minimumHeadPrice * annualShipmentHeads,
-    recommendedAnnualRevenue: result.recommendedHeadPrice * annualShipmentHeads,
-    brandAnnualRevenue: result.brandHeadPrice * annualShipmentHeads,
+    minimum300g: donationForPackage(result.minimumPricePerKg, 0.3),
+    recommended300g: donationForPackage(result.recommendedPricePerKg, 0.3),
+    brand300g: donationForPackage(result.brandPricePerKg, 0.3),
+    minimum500g: donationForPackage(result.minimumPricePerKg, 0.5),
+    recommended500g: donationForPackage(result.recommendedPricePerKg, 0.5),
+    brand500g: donationForPackage(result.brandPricePerKg, 0.5),
+    minimum1kg: donationForPackage(result.minimumPricePerKg, 1.0),
+    recommended1kg: donationForPackage(result.recommendedPricePerKg, 1.0),
+    brand1kg: donationForPackage(result.brandPricePerKg, 1.0),
+    minimumAnnualRevenue: minDonationPerHead * data.annualShipmentHeads,
+    recommendedAnnualRevenue: recDonationPerHead * data.annualShipmentHeads,
+    brandAnnualRevenue: brandDonationPerHead * data.annualShipmentHeads,
   };
 }

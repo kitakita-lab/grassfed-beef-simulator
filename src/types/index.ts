@@ -29,7 +29,7 @@ export interface FormData {
   brandOperationCost: number;
   otherCertCost: number;
 
-  // D. 加工・販売コスト
+  // D. 加工・販売コスト（直販基準）
   processingCost: number;
   packagingCost: number;
   storageCost: number;
@@ -52,12 +52,16 @@ export interface FormData {
   // H. 卸チャネル設定
   wholesaleRate: number; // 卸先掛け率（%）例: 70 → 70%
 
-  // I. 直販・イベント設定
-  directCoefficient: number; // 直販・イベント係数（%入力, 例: 90 → 想定小売の90%）
-
-  // J. ふるさと納税設定
-  furusatoPlatformFeeRate: number; // プラットフォーム手数料率（%入力, 例: 25）
-  furusatoReturnRate: number;      // 目標還元率（%入力, 例: 30、法定上限50%）
+  // I. ふるさと納税設定
+  furusatoReturnRate: number;      // 目標還元率（%入力, 例: 30）
+  furusatoPortalFeeRate: number;   // ポータル手数料率（%入力, 例: 15）
+  furusatoPaymentFeeRate: number;  // 決済手数料率（%入力, 例: 3）
+  furusatoOtherRateFee: number;    // その他率費（%入力）
+  furusatoPackagingCost: number;   // 包装・ギフトBOX代（円/頭）
+  furusatoStorageCost: number;     // 保管・冷凍費（円/頭）
+  furusatoShippingCost: number;    // 発送費（円/頭）
+  furusatoFulfillmentCost: number; // 梱包代行費（円/頭）
+  furusatoOtherFixedCost: number;  // その他固定費（円/頭）
 }
 
 export type RetailPriceLevel = 'low' | 'normal' | 'premium' | 'ultra';
@@ -65,14 +69,30 @@ export type RetailPriceLevel = 'low' | 'normal' | 'premium' | 'ultra';
 export interface WholesaleResult {
   wholesaleRateDecimal: number;
   retailerGrossMarginDecimal: number;
-  minimumRetailPricePerKg: number;
-  recommendedRetailPricePerKg: number;
-  brandRetailPricePerKg: number;
-  minimumRetailPricePer100g: number;
-  recommendedRetailPricePer100g: number;
-  brandRetailPricePer100g: number;
-  retailPriceLevel: RetailPriceLevel;
-  retailPriceComment: string;
+  // 卸価格 = 直販基準価格 × 掛け率
+  minimumWholesalePricePerKg: number;
+  recommendedWholesalePricePerKg: number;
+  brandWholesalePricePerKg: number;
+  minimumWholesalePricePer100g: number;
+  recommendedWholesalePricePer100g: number;
+  brandWholesalePricePer100g: number;
+  minimumWholesaleHeadPrice: number;
+  recommendedWholesaleHeadPrice: number;
+  brandWholesaleHeadPrice: number;
+  minimumWholesaleProfit: number;
+  recommendedWholesaleProfit: number;
+  brandWholesaleProfit: number;
+  minimumWholesaleProfitRate: number;
+  recommendedWholesaleProfitRate: number;
+  brandWholesaleProfitRate: number;
+  minimumWholesaleAnnualRevenue: number;
+  recommendedWholesaleAnnualRevenue: number;
+  brandWholesaleAnnualRevenue: number;
+  minimumWholesaleAnnualProfit: number;
+  recommendedWholesaleAnnualProfit: number;
+  brandWholesaleAnnualProfit: number;
+  directPriceLevel: RetailPriceLevel;
+  directPriceComment: string;
 }
 
 export interface CalculationResult {
@@ -114,33 +134,6 @@ export interface CalculationResult {
   breakEvenPricePerKg: number;
 }
 
-export interface DirectResult {
-  coefficient: number;                   // 直販係数（小数, e.g. 0.90）
-  wholesaleRetailRefPerKg: number;       // 卸想定小売参考価格/kg（basis表示用）
-  minimumPricePerKg: number;
-  recommendedPricePerKg: number;
-  brandPricePerKg: number;
-  minimumPricePer100g: number;
-  recommendedPricePer100g: number;
-  brandPricePer100g: number;
-  minimumHeadPrice: number;
-  recommendedHeadPrice: number;
-  brandHeadPrice: number;
-  minimumProfit: number;
-  recommendedProfit: number;
-  brandProfit: number;
-  minimumProfitRate: number;
-  recommendedProfitRate: number;
-  brandProfitRate: number;
-  minimumAnnualRevenue: number;
-  recommendedAnnualRevenue: number;
-  brandAnnualRevenue: number;
-  minimumAnnualProfit: number;
-  recommendedAnnualProfit: number;
-  brandAnnualProfit: number;
-  wholesaleRecommendedProfit: number;    // 卸推奨利益（比較用）
-}
-
 export interface EventResult {
   minimumPricePer100g: number;
   recommendedPricePer100g: number;
@@ -167,11 +160,9 @@ export interface EventResult {
 
 export interface FurusatoResult {
   returnRateDecimal: number;
-  platformFeeDecimal: number;
-  activeConstraint: 'returnRate' | 'platformFee';
-  minimumDonationPerHead: number;
-  recommendedDonationPerHead: number;
-  brandDonationPerHead: number;
+  rateFeeTotal: number;        // 率費合計（小数）= portal + payment + other
+  fixedCostPerHead: number;    // 固定費合計（円/頭）
+  activeConstraint: 'returnRate' | 'costCoverage';
   minimum300g: number;
   recommended300g: number;
   brand300g: number;
@@ -181,6 +172,9 @@ export interface FurusatoResult {
   minimum1kg: number;
   recommended1kg: number;
   brand1kg: number;
+  minimumDonationPerHead: number;
+  recommendedDonationPerHead: number;
+  brandDonationPerHead: number;
   minimumAnnualRevenue: number;
   recommendedAnnualRevenue: number;
   brandAnnualRevenue: number;
