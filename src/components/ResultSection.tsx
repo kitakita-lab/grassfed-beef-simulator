@@ -33,7 +33,6 @@ function DirectPanel({ cp }: { cp: ChannelPrices }) {
   return (
     <div className="summary-card">
       <div className="summary-header"><span>🏠</span> 直販・EC・ギフト価格</div>
-      <RetailRefStrip cp={cp} />
       <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
           <table className="annual-table">
@@ -62,6 +61,7 @@ function DirectPanel({ cp }: { cp: ChannelPrices }) {
           </table>
         </div>
         <p className="channel-detail-note">小売参考価格より10%安い設定（小売参考 × 0.90）</p>
+        <RetailRefStrip cp={cp} />
       </div>
     </div>
   );
@@ -72,7 +72,6 @@ function EventPanel({ cp }: { cp: ChannelPrices }) {
   return (
     <div className="summary-card">
       <div className="summary-header"><span>🎪</span> イベント販売価格</div>
-      <RetailRefStrip cp={cp} />
       <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
           <table className="annual-table">
@@ -113,6 +112,7 @@ function EventPanel({ cp }: { cp: ChannelPrices }) {
           </table>
         </div>
         <p className="channel-detail-note">小売参考価格 × 0.92 を元に算出し、100g心理価格（398・480・580…円）に丸めて表示</p>
+        <RetailRefStrip cp={cp} />
       </div>
     </div>
   );
@@ -123,7 +123,6 @@ function FurusatoPanel({ cp }: { cp: ChannelPrices }) {
   return (
     <div className="summary-card">
       <div className="summary-header"><span>🎁</span> ふるさと納税 寄付額目安</div>
-      <RetailRefStrip cp={cp} />
       <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
           <table className="annual-table">
@@ -165,6 +164,7 @@ function FurusatoPanel({ cp }: { cp: ChannelPrices }) {
         <p className="furusato-note" style={{ margin: '8px 0 4px' }}>
           ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
         </p>
+        <RetailRefStrip cp={cp} />
       </div>
     </div>
   );
