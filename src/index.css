@@ -825,10 +825,10 @@ body {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 8px;
-  padding: 5px 12px;
+  padding: 5px 12px 4px;
   background: #f7faf7;
   border-top: 1px dashed var(--color-border);
-  border-bottom: 1px dashed var(--color-border);
+  border-radius: 0 0 4px 4px;
   margin: 6px 0 2px;
   font-size: 0.76rem;
   color: var(--color-muted);
