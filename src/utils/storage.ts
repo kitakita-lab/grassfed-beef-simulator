@@ -1,8 +1,7 @@
 import type { FormData } from '../types';
 
-// v3: 価格基準を直販ベースへ変更。furusato詳細費用フィールド追加
-// v2 のキーは別名なので自動的に無視される
-const STORAGE_KEY = 'grassfed_beef_simulator_v3';
+// v4: ふるさと納税詳細フィールド廃止。価格構造をシンプル化。
+const STORAGE_KEY = 'grassfed_beef_simulator_v4';
 
 interface StoredState {
   formData: Partial<FormData>;
@@ -38,15 +37,6 @@ export const DEFAULT_FORM_DATA: FormData = {
   priceStrategy: '標準',
   roundingMode: '100円単位',
   wholesaleRate: 70,
-  furusatoReturnRate: 30,
-  furusatoPortalFeeRate: 15,
-  furusatoPaymentFeeRate: 3,
-  furusatoOtherRateFee: 0,
-  furusatoPackagingCost: 0,
-  furusatoStorageCost: 0,
-  furusatoShippingCost: 0,
-  furusatoFulfillmentCost: 0,
-  furusatoOtherFixedCost: 0,
 };
 
 export const SAMPLE_FORM_DATA: FormData = {
@@ -78,15 +68,6 @@ export const SAMPLE_FORM_DATA: FormData = {
   priceStrategy: '標準',
   roundingMode: '100円単位',
   wholesaleRate: 70,
-  furusatoReturnRate: 30,
-  furusatoPortalFeeRate: 15,
-  furusatoPaymentFeeRate: 3,
-  furusatoOtherRateFee: 0,
-  furusatoPackagingCost: 36000,
-  furusatoStorageCost: 18000,
-  furusatoShippingCost: 180000,
-  furusatoFulfillmentCost: 0,
-  furusatoOtherFixedCost: 0,
 };
 
 export function saveToStorage(data: FormData, hasInteracted: boolean): void {

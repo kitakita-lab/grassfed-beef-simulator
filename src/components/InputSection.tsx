@@ -80,94 +80,6 @@ const CHANNELS: SalesChannel[] = ['直販', '卸', 'ふるさと納税', 'イベ
 const STRATEGIES: PriceStrategy[] = ['控えめ', '標準', '高付加価値'];
 const ROUNDING_MODES: RoundingMode[] = ['1円単位', '10円単位', '100円単位', '100g単価心理価格', '1kg単価心理価格'];
 
-function FurusatoFields({
-  formData,
-  onChange,
-}: {
-  formData: FormData;
-  onChange: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
-}) {
-  return (
-    <div className="wholesale-rate-field">
-      <p className="text-muted text-small" style={{ marginBottom: 8 }}>
-        <strong>率費（寄附金額に対する割合）</strong>
-      </p>
-      <div className="field-row">
-        <NumField
-          label="ポータル手数料率"
-          hint="さとふる・ふるなびなど。目安: 10〜20%"
-          unit="%"
-          value={formData.furusatoPortalFeeRate}
-          step={1}
-          onChange={(v) => onChange('furusatoPortalFeeRate', v)}
-        />
-        <NumField
-          label="決済手数料率"
-          hint="クレジット等。目安: 3%前後"
-          unit="%"
-          value={formData.furusatoPaymentFeeRate}
-          step={0.5}
-          onChange={(v) => onChange('furusatoPaymentFeeRate', v)}
-        />
-      </div>
-      <div className="field-row">
-        <NumField
-          label="その他率費"
-          unit="%"
-          value={formData.furusatoOtherRateFee}
-          step={1}
-          onChange={(v) => onChange('furusatoOtherRateFee', v)}
-        />
-        <NumField
-          label="目標還元率"
-          hint="返礼品価値 ÷ 寄附金額。法定上限50%。実態は30〜35%"
-          unit="%"
-          value={formData.furusatoReturnRate}
-          step={5}
-          onChange={(v) => onChange('furusatoReturnRate', v)}
-        />
-      </div>
-      <p className="text-muted text-small" style={{ marginTop: 12, marginBottom: 8 }}>
-        <strong>固定費（1頭あたり・ふるさと納税専用）</strong>
-      </p>
-      <div className="field-row">
-        <NumField
-          label="包装・ギフトBOX代"
-          unit="円"
-          value={formData.furusatoPackagingCost}
-          onChange={(v) => onChange('furusatoPackagingCost', v)}
-        />
-        <NumField
-          label="保管・冷凍費"
-          unit="円"
-          value={formData.furusatoStorageCost}
-          onChange={(v) => onChange('furusatoStorageCost', v)}
-        />
-      </div>
-      <div className="field-row">
-        <NumField
-          label="発送費"
-          unit="円"
-          value={formData.furusatoShippingCost}
-          onChange={(v) => onChange('furusatoShippingCost', v)}
-        />
-        <NumField
-          label="梱包代行費"
-          unit="円"
-          value={formData.furusatoFulfillmentCost}
-          onChange={(v) => onChange('furusatoFulfillmentCost', v)}
-        />
-      </div>
-      <NumField
-        label="その他固定費"
-        unit="円"
-        value={formData.furusatoOtherFixedCost}
-        onChange={(v) => onChange('furusatoOtherFixedCost', v)}
-      />
-    </div>
-  );
-}
-
 export default function InputSection({ formData, onChange, warnings, hasInteracted }: Props) {
   return (
     <div className="input-area">
@@ -236,21 +148,16 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             ))}
           </div>
         </div>
-        {formData.salesChannel === '卸' && (
-          <div className="wholesale-rate-field">
-            <NumField
-              label="卸先掛け率（想定）"
-              hint="卸価格 = 直販基準価格 × 掛け率。食品卸の一般的な目安: 65〜75%"
-              unit="%"
-              value={formData.wholesaleRate}
-              step={5}
-              onChange={(v) => onChange('wholesaleRate', v)}
-            />
-          </div>
-        )}
-        {formData.salesChannel === 'ふるさと納税' && (
-          <FurusatoFields formData={formData} onChange={onChange} />
-        )}
+        <div className="wholesale-rate-field">
+          <NumField
+            label="卸先掛け率（想定）"
+            hint="全チャネル価格の起点。小売参考 = 卸価格 ÷ 掛け率。食品卸の目安: 65〜75%"
+            unit="%"
+            value={formData.wholesaleRate}
+            step={5}
+            onChange={(v) => onChange('wholesaleRate', v)}
+          />
+        </div>
       </Section>
 
       {/* B. 飼養コスト */}
@@ -340,7 +247,7 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
       </Section>
 
       {/* D. 加工・販売コスト */}
-      <Section icon="📦" title="D. 加工・販売コスト（1頭あたり・直販基準）">
+      <Section icon="📦" title="D. 加工・販売コスト（1頭あたり）">
         <div className="field-row">
           <NumField
             label="加工費"
@@ -442,7 +349,7 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             ))}
           </div>
           <p className="text-muted text-small" style={{ marginTop: 8 }}>
-            直販推奨価格に対する係数で、ブランド価格を算出します。
+            推奨卸価格に係数を乗じてブランド卸価格を算出します。全チャネルの最上位価格帯として使用します。
           </p>
         </div>
       </Section>

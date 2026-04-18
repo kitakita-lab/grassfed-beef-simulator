@@ -1,17 +1,9 @@
-import type {
-  FormData,
-  CalculationResult,
-  WholesaleResult,
-  EventResult,
-  FurusatoResult,
-} from '../types';
+import type { FormData, CalculationResult, ChannelPrices } from '../types';
 import {
   getChannelHints,
   formatCurrency,
   formatPercent,
-  calculateWholesale,
-  calculateEvent,
-  calculateFurusato,
+  calculateChannelPrices,
 } from '../utils/calculator';
 
 interface Props {
@@ -19,30 +11,23 @@ interface Props {
   result: CalculationResult | null;
 }
 
-// ─── 卸チャネルパネル ─────────────────────────────────────────────────────────
-// 卸価格 = 直販基準価格（上の価格カード） × 卸先掛け率
-function WholesalePanel({
-  wr,
-  directMinPerKg,
-  directRecPerKg,
-  directBrandPerKg,
+// ─── チャネル別価格テーブル ───────────────────────────────────────────────────
+// 卸価格（calculate()出力）を起点に、全チャネル価格を一覧で表示
+function ChannelPriceTable({
+  result,
+  cp,
 }: {
-  wr: WholesaleResult;
-  directMinPerKg: number;
-  directRecPerKg: number;
-  directBrandPerKg: number;
+  result: CalculationResult;
+  cp: ChannelPrices;
 }) {
+  const rate = (cp.wholesaleRateDecimal * 100).toFixed(0);
+
   return (
-    <div className="channel-panel wholesale-panel">
-      <div className="channel-panel-header wholesale">
-        🏪 卸チャネル価格
-        <span className="channel-basis-badge">直販基準価格 × 掛け率 = 卸価格</span>
+    <div className="summary-card">
+      <div className="summary-header">
+        <span>💹</span> チャネル別価格一覧（卸価格 → 全チャネル派生）
       </div>
-      <div className="channel-panel-meta">
-        <span className="channel-meta-item">卸先掛け率: <strong>{(wr.wholesaleRateDecimal * 100).toFixed(0)}%</strong></span>
-        <span className="channel-meta-item">卸先想定粗利率: <strong>{formatPercent(wr.retailerGrossMarginDecimal)}</strong></span>
-      </div>
-      <div style={{ padding: '0 4px 4px' }}>
+      <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
           <table className="annual-table">
             <thead>
@@ -54,182 +39,97 @@ function WholesalePanel({
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>直販基準価格 /kg</td>
-                <td className="col-min">{formatCurrency(directMinPerKg)}</td>
-                <td className="col-rec">{formatCurrency(directRecPerKg)}</td>
-                <td className="col-brand">{formatCurrency(directBrandPerKg)}</td>
+              <tr className="channel-section-row">
+                <td colSpan={4}>🏭 卸価格（基準）</td>
               </tr>
               <tr>
                 <td>卸価格 /kg</td>
-                <td className="col-min">{formatCurrency(wr.minimumWholesalePricePerKg)}</td>
-                <td className="col-rec">{formatCurrency(wr.recommendedWholesalePricePerKg)}</td>
-                <td className="col-brand">{formatCurrency(wr.brandWholesalePricePerKg)}</td>
+                <td className="col-min">{formatCurrency(result.minimumPricePerKg)}</td>
+                <td className="col-rec">{formatCurrency(result.recommendedPricePerKg)}</td>
+                <td className="col-brand">{formatCurrency(result.brandPricePerKg)}</td>
+              </tr>
+
+              <tr className="channel-section-row">
+                <td colSpan={4}>🏪 小売参考価格（卸 ÷ {rate}%）</td>
               </tr>
               <tr>
-                <td>卸価格 /100g</td>
-                <td className="col-min">{formatCurrency(wr.minimumWholesalePricePer100g)}</td>
-                <td className="col-rec">{formatCurrency(wr.recommendedWholesalePricePer100g)}</td>
-                <td className="col-brand">{formatCurrency(wr.brandWholesalePricePer100g)}</td>
+                <td>小売参考 /kg</td>
+                <td className="col-min">{formatCurrency(cp.retailMinPerKg)}</td>
+                <td className="col-rec">{formatCurrency(cp.retailRecPerKg)}</td>
+                <td className="col-brand">{formatCurrency(cp.retailBrandPerKg)}</td>
+              </tr>
+
+              <tr className="channel-section-row">
+                <td colSpan={4}>🏠 直販・EC・ギフト（小売×0.90）</td>
               </tr>
               <tr>
-                <td>1頭あたり卸売上</td>
-                <td className="col-min">{formatCurrency(wr.minimumWholesaleHeadPrice)}</td>
-                <td className="col-rec">{formatCurrency(wr.recommendedWholesaleHeadPrice)}</td>
-                <td className="col-brand">{formatCurrency(wr.brandWholesaleHeadPrice)}</td>
+                <td>直販価格 /kg</td>
+                <td className="col-min">{formatCurrency(cp.directMinPerKg)}</td>
+                <td className="col-rec">{formatCurrency(cp.directRecPerKg)}</td>
+                <td className="col-brand">{formatCurrency(cp.directBrandPerKg)}</td>
               </tr>
               <tr>
-                <td>1頭あたり利益</td>
-                <td className={`col-min ${wr.minimumWholesaleProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.minimumWholesaleProfit)}</td>
-                <td className={`col-rec ${wr.recommendedWholesaleProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.recommendedWholesaleProfit)}</td>
-                <td className={`col-brand ${wr.brandWholesaleProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.brandWholesaleProfit)}</td>
+                <td>直販価格 /100g</td>
+                <td className="col-min">{formatCurrency(cp.directMinPer100g)}</td>
+                <td className="col-rec">{formatCurrency(cp.directRecPer100g)}</td>
+                <td className="col-brand">{formatCurrency(cp.directBrandPer100g)}</td>
+              </tr>
+
+              <tr className="channel-section-row">
+                <td colSpan={4}>🎪 イベント販売（小売×0.92 → 100g心理価格）</td>
               </tr>
               <tr>
-                <td>利益率</td>
-                <td className="col-min">{formatPercent(wr.minimumWholesaleProfitRate)}</td>
-                <td className="col-rec">{formatPercent(wr.recommendedWholesaleProfitRate)}</td>
-                <td className="col-brand">{formatPercent(wr.brandWholesaleProfitRate)}</td>
+                <td>100g単価</td>
+                <td className="col-min">{formatCurrency(cp.eventMinPer100g)}</td>
+                <td className="col-rec">{formatCurrency(cp.eventRecPer100g)}</td>
+                <td className="col-brand">{formatCurrency(cp.eventBrandPer100g)}</td>
               </tr>
               <tr>
-                <td>年間卸売上</td>
-                <td className="col-min">{formatCurrency(wr.minimumWholesaleAnnualRevenue)}</td>
-                <td className="col-rec">{formatCurrency(wr.recommendedWholesaleAnnualRevenue)}</td>
-                <td className="col-brand">{formatCurrency(wr.brandWholesaleAnnualRevenue)}</td>
+                <td>300g パック</td>
+                <td className="col-min">{formatCurrency(cp.eventMin300g)}</td>
+                <td className="col-rec">{formatCurrency(cp.eventRec300g)}</td>
+                <td className="col-brand">{formatCurrency(cp.eventBrand300g)}</td>
               </tr>
               <tr>
-                <td>年間利益</td>
-                <td className={`col-min ${wr.minimumWholesaleAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.minimumWholesaleAnnualProfit)}</td>
-                <td className={`col-rec ${wr.recommendedWholesaleAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.recommendedWholesaleAnnualProfit)}</td>
-                <td className={`col-brand ${wr.brandWholesaleAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(wr.brandWholesaleAnnualProfit)}</td>
+                <td>500g パック</td>
+                <td className="col-min">{formatCurrency(cp.eventMin500g)}</td>
+                <td className="col-rec">{formatCurrency(cp.eventRec500g)}</td>
+                <td className="col-brand">{formatCurrency(cp.eventBrand500g)}</td>
+              </tr>
+              <tr>
+                <td>1kg パック</td>
+                <td className="col-min">{formatCurrency(cp.eventMin1kg)}</td>
+                <td className="col-rec">{formatCurrency(cp.eventRec1kg)}</td>
+                <td className="col-brand">{formatCurrency(cp.eventBrand1kg)}</td>
+              </tr>
+
+              <tr className={`channel-section-row${cp.furusatoBelowCostWarning ? ' furusato-warn' : ''}`}>
+                <td colSpan={4}>
+                  🎁 ふるさと納税（小売×1.20・1,000円切上）
+                  {cp.furusatoBelowCostWarning && ' ⚠️ 推奨価格が原価を下回っています'}
+                </td>
+              </tr>
+              <tr>
+                <td>ふるさと /kg</td>
+                <td className="col-min">{formatCurrency(cp.furusatoMinPerKg)}</td>
+                <td className="col-rec">{formatCurrency(cp.furusatoRecPerKg)}</td>
+                <td className="col-brand">{formatCurrency(cp.furusatoBrandPerKg)}</td>
+              </tr>
+              <tr>
+                <td>500g 返礼品</td>
+                <td className="col-min">{formatCurrency(cp.furusatoMin500g)}</td>
+                <td className="col-rec">{formatCurrency(cp.furusatoRec500g)}</td>
+                <td className="col-brand">{formatCurrency(cp.furusatoBrand500g)}</td>
+              </tr>
+              <tr>
+                <td>1kg 返礼品</td>
+                <td className="col-min">{formatCurrency(cp.furusatoMin1kg)}</td>
+                <td className="col-rec">{formatCurrency(cp.furusatoRec1kg)}</td>
+                <td className="col-brand">{formatCurrency(cp.furusatoBrand1kg)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-      <div className={`wholesale-comment ${wr.directPriceLevel}`}>
-        💬 {wr.directPriceComment}
-      </div>
-    </div>
-  );
-}
-
-// ─── イベント販売チャネルパネル ───────────────────────────────────────────────
-// 直販基準価格を100g心理価格に丸め、小ロットパック価格を表示
-function EventPanel({ er }: { er: EventResult }) {
-  const rows: { label: string; min: number; rec: number; brand: number }[] = [
-    { label: '300g パック', min: er.minimum300g, rec: er.recommended300g, brand: er.brand300g },
-    { label: '500g パック', min: er.minimum500g, rec: er.recommended500g, brand: er.brand500g },
-    { label: '1kg パック', min: er.minimum1kg, rec: er.recommended1kg, brand: er.brand1kg },
-  ];
-
-  return (
-    <div className="channel-panel event-panel">
-      <div className="channel-panel-header event">
-        🎪 イベント販売価格（小ロットパック）
-        <span className="channel-basis-badge">直販基準価格 → 100g心理価格に丸め</span>
-      </div>
-      <div className="channel-panel-meta">
-        <span className="channel-meta-item">
-          100g単価（推奨）: <strong>{formatCurrency(er.recommendedPricePer100g)}/100g</strong>
-        </span>
-        <span className="channel-meta-item">
-          1kg単価（推奨）: <strong>{formatCurrency(er.recommendedPricePerKg)}/kg</strong>
-        </span>
-      </div>
-
-      <div className="event-package-grid">
-        {rows.map(({ label, min, rec, brand }) => (
-          <div key={label} className="event-package-row">
-            <div className="event-package-label">{label}</div>
-            <div className="event-package-prices">
-              <div className="event-pkg-cell min">
-                <span className="event-pkg-tier">最低</span>
-                <span className="event-pkg-price col-min">{formatCurrency(min)}</span>
-              </div>
-              <div className="event-pkg-cell rec">
-                <span className="event-pkg-tier">推奨</span>
-                <span className="event-pkg-price col-rec">{formatCurrency(rec)}</span>
-              </div>
-              <div className="event-pkg-cell brand">
-                <span className="event-pkg-tier">ブランド</span>
-                <span className="event-pkg-price col-brand">{formatCurrency(brand)}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="channel-panel-meta" style={{ borderTop: '1px solid #e8d898', paddingTop: 8, marginTop: 4 }}>
-        <span className="channel-meta-item">
-          1頭あたり利益（推奨）:
-          <strong className={er.recommendedProfit >= 0 ? '' : 'negative'}>
-            {' '}{formatCurrency(er.recommendedProfit)}
-          </strong>
-        </span>
-        <span className="channel-meta-item">
-          利益率（推奨）: <strong>{formatPercent(er.recommendedProfitRate)}</strong>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── ふるさと納税チャネルパネル ───────────────────────────────────────────────
-// 直販基準価格を返礼品価値として、2制約モデルで必要寄附金額を算出
-function FurusatoPanel({ fr }: { fr: FurusatoResult }) {
-  const constraintLabel = fr.activeConstraint === 'returnRate'
-    ? `還元率制約が有効（目標還元率 ${(fr.returnRateDecimal * 100).toFixed(0)}%）`
-    : `費用回収制約が有効（率費合計 ${(fr.rateFeeTotal * 100).toFixed(1)}%）`;
-
-  const packages: { label: string; min: number; rec: number; brand: number }[] = [
-    { label: '500g 返礼品', min: fr.minimum500g, rec: fr.recommended500g, brand: fr.brand500g },
-    { label: '1kg 返礼品', min: fr.minimum1kg, rec: fr.recommended1kg, brand: fr.brand1kg },
-    { label: '300g 返礼品', min: fr.minimum300g, rec: fr.recommended300g, brand: fr.brand300g },
-  ];
-
-  return (
-    <div className="channel-panel furusato-panel">
-      <div className="channel-panel-header furusato">
-        🎁 ふるさと納税 必要寄附金額
-        <span className="channel-basis-badge">直販基準価格 = 返礼品価値の参照価格</span>
-      </div>
-      <div className="channel-panel-meta">
-        <span className="channel-meta-item">目標還元率: <strong>{(fr.returnRateDecimal * 100).toFixed(0)}%</strong></span>
-        <span className="channel-meta-item">率費合計: <strong>{(fr.rateFeeTotal * 100).toFixed(1)}%</strong></span>
-        {fr.fixedCostPerHead > 0 && (
-          <span className="channel-meta-item">固定費/頭: <strong>{formatCurrency(fr.fixedCostPerHead)}</strong></span>
-        )}
-        <span className="channel-meta-item furusato-constraint">⚖️ {constraintLabel}</span>
-      </div>
-
-      <div style={{ padding: '0 4px 4px' }}>
-        <div className="annual-table-scroll">
-          <table className="annual-table">
-            <thead>
-              <tr>
-                <th>返礼品</th>
-                <th className="col-min">🔴 最低寄附額</th>
-                <th className="col-rec">🔵 推奨寄附額</th>
-                <th className="col-brand">🟡 ブランド寄附額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {packages.map(({ label, min, rec, brand }) => (
-                <tr key={label}>
-                  <td>{label}</td>
-                  <td className="col-min">{formatCurrency(min)}</td>
-                  <td className="col-rec">{formatCurrency(rec)}</td>
-                  <td className="col-brand">{formatCurrency(brand)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="furusato-note">
-        💡 寄附金額は1,000円単位切り上げ。推奨・ブランド寄附額はブランド価格を返礼品価値の基準として算出。還元率・費用回収の両制約のうち厳しい方を採用。
-        <br />年間調達収入（推奨）: <strong>{formatCurrency(fr.recommendedAnnualRevenue)}</strong>
       </div>
     </div>
   );
@@ -258,9 +158,9 @@ function PriceCard({
   comment: string;
 }) {
   const labels = {
-    min: { badge: '最低価格', title: '最低販売価格', badgeCls: 'badge-min', titleCls: 'min', headerCls: 'min' },
-    rec: { badge: '推奨価格', title: '推奨販売価格', badgeCls: 'badge-rec', titleCls: 'rec', headerCls: 'rec' },
-    brand: { badge: 'ブランド価格', title: 'ブランド販売価格', badgeCls: 'badge-brand', titleCls: 'brand', headerCls: 'brand' },
+    min: { badge: '最低価格', title: '最低卸価格', badgeCls: 'badge-min', titleCls: 'min', headerCls: 'min' },
+    rec: { badge: '推奨価格', title: '推奨卸価格', badgeCls: 'badge-rec', titleCls: 'rec', headerCls: 'rec' },
+    brand: { badge: 'ブランド価格', title: 'ブランド卸価格', badgeCls: 'badge-brand', titleCls: 'brand', headerCls: 'brand' },
   }[tier];
 
   return (
@@ -272,9 +172,9 @@ function PriceCard({
       <div className="price-card-body">
         <div className={`price-main ${labels.titleCls}`}>{formatCurrency(headPrice)}</div>
         <div className="price-sub">
-          {tier === 'brand' ? '直販・EC・ギフト 実売推奨額' :
-           tier === 'rec'   ? 'コスト積み上げ 内部基準額' :
-                              '赤字回避 下限基準額'}
+          {tier === 'brand' ? 'ブランド戦略 上位卸価格' :
+           tier === 'rec'   ? 'コスト積み上げ 標準卸価格' :
+                              '赤字回避 最低卸価格'}
         </div>
         <div className="price-row">
           <span className="price-row-label">1kg 単価</span>
@@ -319,19 +219,6 @@ const GENERAL_TIPS = [
   '価格は下げやすく上げにくいため、最初から適正価格で設定することが大切です。',
 ];
 
-function channelPriceCardNote(channel: string): string | null {
-  switch (channel) {
-    case '卸':
-      return '上の3段階価格が直販基準価格です。↓に卸価格（直販×掛け率）と卸利益を表示しています。';
-    case 'イベント販売':
-      return '上の価格が直販基準価格です。↓に100g心理価格丸め後のパック別イベント価格を表示しています。';
-    case 'ふるさと納税':
-      return '上の価格が直販基準価格（返礼品価値の参照）です。↓に必要寄附金額を表示しています。';
-    default:
-      return null;
-  }
-}
-
 export default function ResultSection({ formData, result }: Props) {
   const channelHints = getChannelHints(formData.salesChannel);
 
@@ -369,6 +256,7 @@ export default function ResultSection({ formData, result }: Props) {
 
   const {
     raisingCost,
+    annualBrandCost,
     brandCostPerHead,
     processingCostTotal,
     baseCost,
@@ -395,31 +283,9 @@ export default function ResultSection({ formData, result }: Props) {
     recommendedAnnualProfit,
     brandAnnualProfit,
     breakEvenPricePerKg,
-    annualBrandCost,
   } = result;
 
-  // チャネル別補足パネルの計算
-  const wholesaleResult: WholesaleResult | null =
-    formData.salesChannel === '卸' && formData.wholesaleRate > 0
-      ? calculateWholesale(
-          result,
-          formData.wholesaleRate,
-          formData.meatWeightPerHead,
-          formData.annualShipmentHeads,
-        )
-      : null;
-
-  const eventResult: EventResult | null =
-    formData.salesChannel === 'イベント販売'
-      ? calculateEvent(result, formData.meatWeightPerHead)
-      : null;
-
-  const furusatoResult: FurusatoResult | null =
-    formData.salesChannel === 'ふるさと納税' && formData.furusatoReturnRate > 0
-      ? calculateFurusato(result, formData)
-      : null;
-
-  const priceCardNote = channelPriceCardNote(formData.salesChannel);
+  const channelPrices = calculateChannelPrices(result, formData.wholesaleRate, formData.meatWeightPerHead);
 
   return (
     <div className="results-area">
@@ -430,12 +296,12 @@ export default function ResultSection({ formData, result }: Props) {
         手数料率: <strong>{formatPercent(feeRate)}</strong>
       </div>
 
-      {/* 直販基準価格バッジ */}
+      {/* 価格体系バナー */}
       <div className="direct-basis-banner">
-        🏠 基準価格は直販です — 推奨価格は内部基準（コスト+利益率）、直販・EC・ギフトの実売にはブランド価格を使用してください
+        🏭 上の3段階が卸価格です — 小売参考 = 卸 ÷ 掛け率 → 直販×0.90 / イベント×0.92（心理価格） / ふるさと納税×1.20
       </div>
 
-      {/* 直販基準価格カード（全チャネル共通） */}
+      {/* 卸価格カード（3段階） */}
       <div className="price-cards">
         <PriceCard
           tier="min"
@@ -446,7 +312,7 @@ export default function ResultSection({ formData, result }: Props) {
           profitRate={minimumProfitRate}
           annualRevenue={minimumAnnualRevenue}
           annualProfit={minimumAnnualProfit}
-          comment="赤字を回避するための下限価格です。この価格を下回ると損失が発生します。"
+          comment="赤字を回避するための最低卸価格です。この価格を下回ると損失が発生します。"
         />
         <PriceCard
           tier="rec"
@@ -457,7 +323,7 @@ export default function ResultSection({ formData, result }: Props) {
           profitRate={recommendedProfitRate}
           annualRevenue={recommendedAnnualRevenue}
           annualProfit={recommendedAnnualProfit}
-          comment="コスト積み上げによる内部基準価格です。直販・EC・ギフトの実売にはブランド価格の使用を推奨します。"
+          comment="コスト積み上げによる推奨卸価格です。全チャネル価格の標準基準として使用します。"
         />
         <PriceCard
           tier="brand"
@@ -468,28 +334,12 @@ export default function ResultSection({ formData, result }: Props) {
           profitRate={brandProfitRate}
           annualRevenue={brandAnnualRevenue}
           annualProfit={brandAnnualProfit}
-          comment={`直販・EC・ギフトの実売推奨価格です（${formData.priceStrategy}戦略）。有機認証・グラスフェッド・少頭数育成の付加価値を適正に反映した価格帯です。`}
+          comment={`有機認証・グラスフェッド・少頭数育成の付加価値を反映した上位卸価格です（${formData.priceStrategy}戦略）。`}
         />
       </div>
 
-      {/* チャネル別補足説明 */}
-      {priceCardNote && (
-        <div className="channel-note">
-          ℹ️ {priceCardNote}
-        </div>
-      )}
-
-      {/* チャネル別パネル */}
-      {wholesaleResult && (
-        <WholesalePanel
-          wr={wholesaleResult}
-          directMinPerKg={minimumPricePerKg}
-          directRecPerKg={recommendedPricePerKg}
-          directBrandPerKg={brandPricePerKg}
-        />
-      )}
-      {eventResult && <EventPanel er={eventResult} />}
-      {furusatoResult && <FurusatoPanel fr={furusatoResult} />}
+      {/* チャネル別価格テーブル */}
+      <ChannelPriceTable result={result} cp={channelPrices} />
 
       {/* コスト内訳 */}
       <div className="summary-card">
@@ -535,7 +385,7 @@ export default function ResultSection({ formData, result }: Props) {
       {/* 年間比較表 */}
       <div className="summary-card">
         <div className="summary-header">
-          <span>📅</span> 年間想定（{formData.annualShipmentHeads}頭出荷時・直販基準）
+          <span>📅</span> 年間想定（{formData.annualShipmentHeads}頭出荷時・卸価格基準）
         </div>
         <div className="summary-body" style={{ padding: '0 4px 4px' }}>
           <div className="annual-table-scroll">
@@ -550,19 +400,13 @@ export default function ResultSection({ formData, result }: Props) {
               </thead>
               <tbody>
                 <tr>
-                  <td>1kg単価</td>
+                  <td>卸価格 1kg単価</td>
                   <td className="col-min">{formatCurrency(minimumPricePerKg)}</td>
                   <td className="col-rec">{formatCurrency(recommendedPricePerKg)}</td>
                   <td className="col-brand">{formatCurrency(brandPricePerKg)}</td>
                 </tr>
                 <tr>
-                  <td>100g単価</td>
-                  <td className="col-min">{formatCurrency(minimumPricePer100g)}</td>
-                  <td className="col-rec">{formatCurrency(recommendedPricePer100g)}</td>
-                  <td className="col-brand">{formatCurrency(brandPricePer100g)}</td>
-                </tr>
-                <tr>
-                  <td>年間売上</td>
+                  <td>年間卸売上</td>
                   <td className="col-min">{formatCurrency(minimumAnnualRevenue)}</td>
                   <td className="col-rec">{formatCurrency(recommendedAnnualRevenue)}</td>
                   <td className="col-brand">{formatCurrency(brandAnnualRevenue)}</td>

@@ -718,6 +718,19 @@ body {
 .annual-table .col-min   { color: var(--color-min); }
 .annual-table .col-rec   { color: var(--color-rec); }
 .annual-table .col-brand { color: var(--color-brand); }
+.annual-table .channel-section-row td {
+  background: #f0f4f8;
+  color: #3a4a5a;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border-top: 1px solid #c8d4e0;
+}
+.annual-table .channel-section-row.furusato-warn td {
+  background: #fff3f0;
+  color: #c0392b;
+  border-top: 1px solid #f5c6bc;
+}
 
 /* ─── Channel hints ─── */
 .hints-card {
