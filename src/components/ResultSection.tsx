@@ -12,20 +12,18 @@ interface Props {
 }
 
 // ─── チャネル別価格テーブル ───────────────────────────────────────────────────
-// 卸価格（calculate()出力）を起点に、全チャネル価格を一覧で表示
+// 小売参考価格（基準）→ 直販 / イベント / ふるさと納税 / 卸 の順で派生を表示
 function ChannelPriceTable({
-  result,
   cp,
+  wholesaleRate,
 }: {
-  result: CalculationResult;
   cp: ChannelPrices;
+  wholesaleRate: number;
 }) {
-  const rate = (cp.wholesaleRateDecimal * 100).toFixed(0);
-
   return (
     <div className="summary-card">
       <div className="summary-header">
-        <span>💹</span> チャネル別価格一覧（卸価格 → 全チャネル派生）
+        <span>💹</span> チャネル別価格一覧（小売参考価格から全チャネル派生）
       </div>
       <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
@@ -40,17 +38,7 @@ function ChannelPriceTable({
             </thead>
             <tbody>
               <tr className="channel-section-row">
-                <td colSpan={4}>🏭 卸価格（基準）</td>
-              </tr>
-              <tr>
-                <td>卸価格 /kg</td>
-                <td className="col-min">{formatCurrency(result.minimumPricePerKg)}</td>
-                <td className="col-rec">{formatCurrency(result.recommendedPricePerKg)}</td>
-                <td className="col-brand">{formatCurrency(result.brandPricePerKg)}</td>
-              </tr>
-
-              <tr className="channel-section-row">
-                <td colSpan={4}>🏪 小売参考価格（卸 ÷ {rate}%）</td>
+                <td colSpan={4}>🏪 小売参考価格（基準）</td>
               </tr>
               <tr>
                 <td>小売参考 /kg</td>
@@ -127,6 +115,16 @@ function ChannelPriceTable({
                 <td className="col-rec">{formatCurrency(cp.furusatoRec1kg)}</td>
                 <td className="col-brand">{formatCurrency(cp.furusatoBrand1kg)}</td>
               </tr>
+
+              <tr className="channel-section-row">
+                <td colSpan={4}>🏭 卸価格（小売×{wholesaleRate}%）</td>
+              </tr>
+              <tr>
+                <td>卸価格 /kg</td>
+                <td className="col-min">{formatCurrency(cp.wholesaleMinPerKg)}</td>
+                <td className="col-rec">{formatCurrency(cp.wholesaleRecPerKg)}</td>
+                <td className="col-brand">{formatCurrency(cp.wholesaleBrandPerKg)}</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -158,9 +156,9 @@ function PriceCard({
   comment: string;
 }) {
   const labels = {
-    min: { badge: '最低価格', title: '最低卸価格', badgeCls: 'badge-min', titleCls: 'min', headerCls: 'min' },
-    rec: { badge: '推奨価格', title: '推奨卸価格', badgeCls: 'badge-rec', titleCls: 'rec', headerCls: 'rec' },
-    brand: { badge: 'ブランド価格', title: 'ブランド卸価格', badgeCls: 'badge-brand', titleCls: 'brand', headerCls: 'brand' },
+    min: { badge: '最低価格', title: '最低小売参考価格', badgeCls: 'badge-min', titleCls: 'min', headerCls: 'min' },
+    rec: { badge: '推奨価格', title: '推奨小売参考価格', badgeCls: 'badge-rec', titleCls: 'rec', headerCls: 'rec' },
+    brand: { badge: 'ブランド価格', title: 'ブランド小売参考価格', badgeCls: 'badge-brand', titleCls: 'brand', headerCls: 'brand' },
   }[tier];
 
   return (
@@ -172,9 +170,9 @@ function PriceCard({
       <div className="price-card-body">
         <div className={`price-main ${labels.titleCls}`}>{formatCurrency(headPrice)}</div>
         <div className="price-sub">
-          {tier === 'brand' ? 'ブランド戦略 上位卸価格' :
-           tier === 'rec'   ? 'コスト積み上げ 標準卸価格' :
-                              '赤字回避 最低卸価格'}
+          {tier === 'brand' ? 'ブランド戦略 小売参考価格' :
+           tier === 'rec'   ? 'コスト積み上げ 小売参考価格' :
+                              '赤字回避 小売参考下限'}
         </div>
         <div className="price-row">
           <span className="price-row-label">1kg 単価</span>
@@ -261,31 +259,15 @@ export default function ResultSection({ formData, result }: Props) {
     processingCostTotal,
     baseCost,
     feeRate,
-    minimumHeadPrice,
-    recommendedHeadPrice,
-    brandHeadPrice,
-    minimumPricePerKg,
-    recommendedPricePerKg,
-    brandPricePerKg,
-    minimumPricePer100g,
-    recommendedPricePer100g,
-    brandPricePer100g,
-    minimumProfit,
-    recommendedProfit,
-    brandProfit,
-    minimumProfitRate,
-    recommendedProfitRate,
-    brandProfitRate,
-    minimumAnnualRevenue,
-    recommendedAnnualRevenue,
-    brandAnnualRevenue,
-    minimumAnnualProfit,
-    recommendedAnnualProfit,
-    brandAnnualProfit,
     breakEvenPricePerKg,
   } = result;
 
-  const channelPrices = calculateChannelPrices(result, formData.wholesaleRate, formData.meatWeightPerHead);
+  const cp = calculateChannelPrices(
+    result,
+    formData.wholesaleRate,
+    formData.meatWeightPerHead,
+    formData.annualShipmentHeads,
+  );
 
   return (
     <div className="results-area">
@@ -296,50 +278,50 @@ export default function ResultSection({ formData, result }: Props) {
         手数料率: <strong>{formatPercent(feeRate)}</strong>
       </div>
 
-      {/* 価格体系バナー */}
+      {/* 基準価格バナー */}
       <div className="direct-basis-banner">
-        🏭 上の3段階が卸価格です — 小売参考 = 卸 ÷ 掛け率 → 直販×0.90 / イベント×0.92（心理価格） / ふるさと納税×1.20
+        🏪 基準価格は小売参考価格です — 直販×0.90 / イベント×0.92（心理価格） / ふるさと納税×1.20 / 卸×{formData.wholesaleRate}%
       </div>
 
-      {/* 卸価格カード（3段階） */}
+      {/* 小売参考価格カード（3段階） */}
       <div className="price-cards">
         <PriceCard
           tier="min"
-          headPrice={minimumHeadPrice}
-          pricePerKg={minimumPricePerKg}
-          pricePer100g={minimumPricePer100g}
-          profit={minimumProfit}
-          profitRate={minimumProfitRate}
-          annualRevenue={minimumAnnualRevenue}
-          annualProfit={minimumAnnualProfit}
-          comment="赤字を回避するための最低卸価格です。この価格を下回ると損失が発生します。"
+          headPrice={cp.retailMinHeadPrice}
+          pricePerKg={cp.retailMinPerKg}
+          pricePer100g={cp.retailMinPerKg / 10}
+          profit={cp.retailMinProfit}
+          profitRate={cp.retailMinProfitRate}
+          annualRevenue={cp.retailMinAnnualRevenue}
+          annualProfit={cp.retailMinAnnualProfit}
+          comment="赤字を回避するための最低小売参考価格です。この価格を下回ると損失が発生します。"
         />
         <PriceCard
           tier="rec"
-          headPrice={recommendedHeadPrice}
-          pricePerKg={recommendedPricePerKg}
-          pricePer100g={recommendedPricePer100g}
-          profit={recommendedProfit}
-          profitRate={recommendedProfitRate}
-          annualRevenue={recommendedAnnualRevenue}
-          annualProfit={recommendedAnnualProfit}
-          comment="コスト積み上げによる推奨卸価格です。全チャネル価格の標準基準として使用します。"
+          headPrice={cp.retailRecHeadPrice}
+          pricePerKg={cp.retailRecPerKg}
+          pricePer100g={cp.retailRecPerKg / 10}
+          profit={cp.retailRecProfit}
+          profitRate={cp.retailRecProfitRate}
+          annualRevenue={cp.retailRecAnnualRevenue}
+          annualProfit={cp.retailRecAnnualProfit}
+          comment="コスト積み上げによる推奨小売参考価格です。全チャネル価格の基準として使用します。"
         />
         <PriceCard
           tier="brand"
-          headPrice={brandHeadPrice}
-          pricePerKg={brandPricePerKg}
-          pricePer100g={brandPricePer100g}
-          profit={brandProfit}
-          profitRate={brandProfitRate}
-          annualRevenue={brandAnnualRevenue}
-          annualProfit={brandAnnualProfit}
-          comment={`有機認証・グラスフェッド・少頭数育成の付加価値を反映した上位卸価格です（${formData.priceStrategy}戦略）。`}
+          headPrice={cp.retailBrandHeadPrice}
+          pricePerKg={cp.retailBrandPerKg}
+          pricePer100g={cp.retailBrandPerKg / 10}
+          profit={cp.retailBrandProfit}
+          profitRate={cp.retailBrandProfitRate}
+          annualRevenue={cp.retailBrandAnnualRevenue}
+          annualProfit={cp.retailBrandAnnualProfit}
+          comment={`有機認証・グラスフェッド・少頭数育成の付加価値を反映した上位小売参考価格です（${formData.priceStrategy}戦略）。`}
         />
       </div>
 
       {/* チャネル別価格テーブル */}
-      <ChannelPriceTable result={result} cp={channelPrices} />
+      <ChannelPriceTable cp={cp} wholesaleRate={formData.wholesaleRate} />
 
       {/* コスト内訳 */}
       <div className="summary-card">
@@ -370,9 +352,9 @@ export default function ResultSection({ formData, result }: Props) {
             <span className="summary-value highlight">{formatCurrency(baseCost)}</span>
           </div>
           <div className="summary-row">
-            <span className="summary-label">損益分岐単価（1kg）</span>
+            <span className="summary-label">損益分岐 小売参考 /kg</span>
             <span className="summary-value" style={{ color: '#c0392b' }}>
-              {formatCurrency(breakEvenPricePerKg)} / kg
+              {formatCurrency(Math.ceil(breakEvenPricePerKg / (formData.wholesaleRate / 100)))} / kg
             </span>
           </div>
           <div className="summary-row">
@@ -385,7 +367,7 @@ export default function ResultSection({ formData, result }: Props) {
       {/* 年間比較表 */}
       <div className="summary-card">
         <div className="summary-header">
-          <span>📅</span> 年間想定（{formData.annualShipmentHeads}頭出荷時・卸価格基準）
+          <span>📅</span> 年間想定（{formData.annualShipmentHeads}頭出荷時・小売参考価格基準）
         </div>
         <div className="summary-body" style={{ padding: '0 4px 4px' }}>
           <div className="annual-table-scroll">
@@ -400,28 +382,28 @@ export default function ResultSection({ formData, result }: Props) {
               </thead>
               <tbody>
                 <tr>
-                  <td>卸価格 1kg単価</td>
-                  <td className="col-min">{formatCurrency(minimumPricePerKg)}</td>
-                  <td className="col-rec">{formatCurrency(recommendedPricePerKg)}</td>
-                  <td className="col-brand">{formatCurrency(brandPricePerKg)}</td>
+                  <td>小売参考 1kg単価</td>
+                  <td className="col-min">{formatCurrency(cp.retailMinPerKg)}</td>
+                  <td className="col-rec">{formatCurrency(cp.retailRecPerKg)}</td>
+                  <td className="col-brand">{formatCurrency(cp.retailBrandPerKg)}</td>
                 </tr>
                 <tr>
-                  <td>年間卸売上</td>
-                  <td className="col-min">{formatCurrency(minimumAnnualRevenue)}</td>
-                  <td className="col-rec">{formatCurrency(recommendedAnnualRevenue)}</td>
-                  <td className="col-brand">{formatCurrency(brandAnnualRevenue)}</td>
+                  <td>年間売上（小売参考）</td>
+                  <td className="col-min">{formatCurrency(cp.retailMinAnnualRevenue)}</td>
+                  <td className="col-rec">{formatCurrency(cp.retailRecAnnualRevenue)}</td>
+                  <td className="col-brand">{formatCurrency(cp.retailBrandAnnualRevenue)}</td>
                 </tr>
                 <tr>
                   <td>年間利益</td>
-                  <td className={`col-min ${minimumAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(minimumAnnualProfit)}</td>
-                  <td className={`col-rec ${recommendedAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(recommendedAnnualProfit)}</td>
-                  <td className={`col-brand ${brandAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(brandAnnualProfit)}</td>
+                  <td className={`col-min ${cp.retailMinAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(cp.retailMinAnnualProfit)}</td>
+                  <td className={`col-rec ${cp.retailRecAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(cp.retailRecAnnualProfit)}</td>
+                  <td className={`col-brand ${cp.retailBrandAnnualProfit < 0 ? 'negative' : ''}`}>{formatCurrency(cp.retailBrandAnnualProfit)}</td>
                 </tr>
                 <tr>
                   <td>利益率</td>
-                  <td className="col-min">{formatPercent(minimumProfitRate)}</td>
-                  <td className="col-rec">{formatPercent(recommendedProfitRate)}</td>
-                  <td className="col-brand">{formatPercent(brandProfitRate)}</td>
+                  <td className="col-min">{formatPercent(cp.retailMinProfitRate)}</td>
+                  <td className="col-rec">{formatPercent(cp.retailRecProfitRate)}</td>
+                  <td className="col-brand">{formatPercent(cp.retailBrandProfitRate)}</td>
                 </tr>
               </tbody>
             </table>
@@ -441,9 +423,9 @@ export default function ResultSection({ formData, result }: Props) {
               <span className="summary-value">{formatCurrency(formData.annualTargetProfit)}</span>
             </div>
             {[
-              { label: '最低価格での年間利益', value: minimumAnnualProfit, cls: 'col-min' },
-              { label: '推奨価格での年間利益', value: recommendedAnnualProfit, cls: 'col-rec' },
-              { label: 'ブランド価格での年間利益', value: brandAnnualProfit, cls: 'col-brand' },
+              { label: '最低価格での年間利益', value: cp.retailMinAnnualProfit, cls: 'col-min' },
+              { label: '推奨価格での年間利益', value: cp.retailRecAnnualProfit, cls: 'col-rec' },
+              { label: 'ブランド価格での年間利益', value: cp.retailBrandAnnualProfit, cls: 'col-brand' },
             ].map(({ label, value, cls }) => {
               const diff = value - formData.annualTargetProfit;
               return (

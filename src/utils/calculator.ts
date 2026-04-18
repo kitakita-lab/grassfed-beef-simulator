@@ -155,6 +155,7 @@ export function calculateChannelPrices(
   result: CalculationResult,
   wholesaleRate: number,
   meatWeightPerHead: number,
+  annualShipmentHeads: number,
 ): ChannelPrices {
   const wholesaleRateDecimal = wholesaleRate / 100;
 
@@ -183,6 +184,32 @@ export function calculateChannelPrices(
   // 原価割れ判定: ふるさと納税推奨 /頭 が baseCost を下回る場合に警告
   const furusatoRecHeadPrice = furusatoRecPerKg * meatWeightPerHead;
   const furusatoBelowCostWarning = furusatoRecHeadPrice < result.baseCost;
+
+  // 小売価格ベース利益指標（メイン価格カード用）
+  const retailMinHeadPrice = retailMin * meatWeightPerHead;
+  const retailRecHeadPrice = retailRec * meatWeightPerHead;
+  const retailBrandHeadPrice = retailBrand * meatWeightPerHead;
+
+  const retailMinProfit = retailMinHeadPrice * (1 - result.feeRate) - result.baseCost;
+  const retailRecProfit = retailRecHeadPrice * (1 - result.feeRate) - result.baseCost;
+  const retailBrandProfit = retailBrandHeadPrice * (1 - result.feeRate) - result.baseCost;
+
+  const retailMinProfitRate = retailMinHeadPrice > 0 ? retailMinProfit / retailMinHeadPrice : 0;
+  const retailRecProfitRate = retailRecHeadPrice > 0 ? retailRecProfit / retailRecHeadPrice : 0;
+  const retailBrandProfitRate = retailBrandHeadPrice > 0 ? retailBrandProfit / retailBrandHeadPrice : 0;
+
+  const retailMinAnnualRevenue = retailMinHeadPrice * annualShipmentHeads;
+  const retailRecAnnualRevenue = retailRecHeadPrice * annualShipmentHeads;
+  const retailBrandAnnualRevenue = retailBrandHeadPrice * annualShipmentHeads;
+
+  const retailMinAnnualProfit = retailMinProfit * annualShipmentHeads;
+  const retailRecAnnualProfit = retailRecProfit * annualShipmentHeads;
+  const retailBrandAnnualProfit = retailBrandProfit * annualShipmentHeads;
+
+  // 卸価格 = 小売 × 掛け率（≈ calculate() 出力と同値）
+  const wholesaleMinPerKg = round10(retailMin * wholesaleRateDecimal);
+  const wholesaleRecPerKg = round10(retailRec * wholesaleRateDecimal);
+  const wholesaleBrandPerKg = round10(retailBrand * wholesaleRateDecimal);
 
   return {
     wholesaleRateDecimal,
@@ -220,6 +247,12 @@ export function calculateChannelPrices(
     furusatoRec1kg:   ceil1000(furusatoRecPerKg),
     furusatoBrand1kg: ceil1000(furusatoBrandPerKg),
     furusatoBelowCostWarning,
+    retailMinHeadPrice, retailRecHeadPrice, retailBrandHeadPrice,
+    retailMinProfit, retailRecProfit, retailBrandProfit,
+    retailMinProfitRate, retailRecProfitRate, retailBrandProfitRate,
+    retailMinAnnualRevenue, retailRecAnnualRevenue, retailBrandAnnualRevenue,
+    retailMinAnnualProfit, retailRecAnnualProfit, retailBrandAnnualProfit,
+    wholesaleMinPerKg, wholesaleRecPerKg, wholesaleBrandPerKg,
   };
 }
 

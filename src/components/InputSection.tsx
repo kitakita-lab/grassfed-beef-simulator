@@ -151,7 +151,7 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
         <div className="wholesale-rate-field">
           <NumField
             label="卸先掛け率（想定）"
-            hint="全チャネル価格の起点。小売参考 = 卸価格 ÷ 掛け率。食品卸の目安: 65〜75%"
+            hint="卸チャネル価格の算出に使用。卸価格 = 小売参考価格 × 掛け率。食品卸の目安: 65〜75%"
             unit="%"
             value={formData.wholesaleRate}
             step={5}

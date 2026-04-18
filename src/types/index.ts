@@ -138,6 +138,27 @@ export interface ChannelPrices {
   furusatoRec1kg: number;
   furusatoBrand1kg: number;
   furusatoBelowCostWarning: boolean; // 推奨価格が原価を下回る場合 true
+
+  // 小売価格ベースの利益指標（メイン価格カード用）
+  retailMinHeadPrice: number;
+  retailRecHeadPrice: number;
+  retailBrandHeadPrice: number;
+  retailMinProfit: number;
+  retailRecProfit: number;
+  retailBrandProfit: number;
+  retailMinProfitRate: number;
+  retailRecProfitRate: number;
+  retailBrandProfitRate: number;
+  retailMinAnnualRevenue: number;
+  retailRecAnnualRevenue: number;
+  retailBrandAnnualRevenue: number;
+  retailMinAnnualProfit: number;
+  retailRecAnnualProfit: number;
+  retailBrandAnnualProfit: number;
+  // 卸価格（小売 × 掛け率）/kg
+  wholesaleMinPerKg: number;
+  wholesaleRecPerKg: number;
+  wholesaleBrandPerKg: number;
 }
 
 export interface ValidationWarning {
