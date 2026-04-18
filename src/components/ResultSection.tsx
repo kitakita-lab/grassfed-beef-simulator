@@ -115,6 +115,13 @@ function ChannelPriceTable({
                 <td className="col-rec">{formatCurrency(cp.furusatoRec1kg)}</td>
                 <td className="col-brand">{formatCurrency(cp.furusatoBrand1kg)}</td>
               </tr>
+              <tr>
+                <td colSpan={4} style={{ padding: '6px 8px 10px' }}>
+                  <p className="furusato-note" style={{ margin: 0 }}>
+                    ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
+                  </p>
+                </td>
+              </tr>
 
               <tr className="channel-section-row">
                 <td colSpan={4}>🏭 卸価格（小売×{wholesaleRate}%）</td>
