@@ -447,17 +447,19 @@ export function calculateFurusato(
     return Math.ceil(Math.max(d1, d2) / 1000) * 1000;
   }
 
-  // 有効制約の判定（推奨価格×500gパッケージで評価）
-  const giftValue500gRec = result.recommendedPricePerKg * 0.5;
+  // 有効制約の判定（ブランド価格×500gパッケージで評価）
+  // 推奨・ブランド寄附額はブランド価格を返礼品価値の基準とする
+  const giftValue500gBrand = result.brandPricePerKg * 0.5;
   const fixedCost500g =
     data.meatWeightPerHead > 0 ? fixedCostPerHead * (0.5 / data.meatWeightPerHead) : 0;
-  const d1rec = returnRateDecimal > 0 ? giftValue500gRec / returnRateDecimal : 0;
-  const d2rec = rateFeeTotal < 1 ? (giftValue500gRec + fixedCost500g) / (1 - rateFeeTotal) : 0;
+  const d1rec = returnRateDecimal > 0 ? giftValue500gBrand / returnRateDecimal : 0;
+  const d2rec = rateFeeTotal < 1 ? (giftValue500gBrand + fixedCost500g) / (1 - rateFeeTotal) : 0;
   const activeConstraint: 'returnRate' | 'costCoverage' = d1rec >= d2rec ? 'returnRate' : 'costCoverage';
 
   // 1頭分（全量）の寄附金額
+  // 推奨・ブランド: ブランド価格を返礼品価値の基準とすることで市場適正価格を反映
   const minDonationPerHead = donationForPackage(result.minimumPricePerKg, data.meatWeightPerHead);
-  const recDonationPerHead = donationForPackage(result.recommendedPricePerKg, data.meatWeightPerHead);
+  const recDonationPerHead = donationForPackage(result.brandPricePerKg, data.meatWeightPerHead);
   const brandDonationPerHead = donationForPackage(result.brandPricePerKg, data.meatWeightPerHead);
 
   return {
@@ -469,13 +471,13 @@ export function calculateFurusato(
     recommendedDonationPerHead: recDonationPerHead,
     brandDonationPerHead: brandDonationPerHead,
     minimum300g: donationForPackage(result.minimumPricePerKg, 0.3),
-    recommended300g: donationForPackage(result.recommendedPricePerKg, 0.3),
+    recommended300g: donationForPackage(result.brandPricePerKg, 0.3),
     brand300g: donationForPackage(result.brandPricePerKg, 0.3),
     minimum500g: donationForPackage(result.minimumPricePerKg, 0.5),
-    recommended500g: donationForPackage(result.recommendedPricePerKg, 0.5),
+    recommended500g: donationForPackage(result.brandPricePerKg, 0.5),
     brand500g: donationForPackage(result.brandPricePerKg, 0.5),
     minimum1kg: donationForPackage(result.minimumPricePerKg, 1.0),
-    recommended1kg: donationForPackage(result.recommendedPricePerKg, 1.0),
+    recommended1kg: donationForPackage(result.brandPricePerKg, 1.0),
     brand1kg: donationForPackage(result.brandPricePerKg, 1.0),
     minimumAnnualRevenue: minDonationPerHead * data.annualShipmentHeads,
     recommendedAnnualRevenue: recDonationPerHead * data.annualShipmentHeads,

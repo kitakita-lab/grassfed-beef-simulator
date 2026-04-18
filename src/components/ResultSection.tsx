@@ -228,7 +228,7 @@ function FurusatoPanel({ fr }: { fr: FurusatoResult }) {
       </div>
 
       <div className="furusato-note">
-        💡 寄附金額は1,000円単位切り上げ。直販基準価格を返礼品価値として、還元率・費用回収の両制約のうち厳しい方を採用。
+        💡 寄附金額は1,000円単位切り上げ。推奨・ブランド寄附額はブランド価格を返礼品価値の基準として算出。還元率・費用回収の両制約のうち厳しい方を採用。
         <br />年間調達収入（推奨）: <strong>{formatCurrency(fr.recommendedAnnualRevenue)}</strong>
       </div>
     </div>
@@ -271,7 +271,11 @@ function PriceCard({
       </div>
       <div className="price-card-body">
         <div className={`price-main ${labels.titleCls}`}>{formatCurrency(headPrice)}</div>
-        <div className="price-sub">1頭あたり販売額（直販基準）</div>
+        <div className="price-sub">
+          {tier === 'brand' ? '直販・EC・ギフト 実売推奨額' :
+           tier === 'rec'   ? 'コスト積み上げ 内部基準額' :
+                              '赤字回避 下限基準額'}
+        </div>
         <div className="price-row">
           <span className="price-row-label">1kg 単価</span>
           <span className="price-row-value">{formatCurrency(pricePerKg)} / kg</span>
@@ -428,7 +432,7 @@ export default function ResultSection({ formData, result }: Props) {
 
       {/* 直販基準価格バッジ */}
       <div className="direct-basis-banner">
-        🏠 基準価格は直販です — 全チャネルの価格はこの直販価格から算出されます
+        🏠 基準価格は直販です — 推奨価格は内部基準（コスト+利益率）、直販・EC・ギフトの実売にはブランド価格を使用してください
       </div>
 
       {/* 直販基準価格カード（全チャネル共通） */}
@@ -453,7 +457,7 @@ export default function ResultSection({ formData, result }: Props) {
           profitRate={recommendedProfitRate}
           annualRevenue={recommendedAnnualRevenue}
           annualProfit={recommendedAnnualProfit}
-          comment="継続経営のための現実的な価格です。理想利益率を確保しつつ、最低価格の110%以上を保証しています。"
+          comment="コスト積み上げによる内部基準価格です。直販・EC・ギフトの実売にはブランド価格の使用を推奨します。"
         />
         <PriceCard
           tier="brand"
@@ -464,7 +468,7 @@ export default function ResultSection({ formData, result }: Props) {
           profitRate={brandProfitRate}
           annualRevenue={brandAnnualRevenue}
           annualProfit={brandAnnualProfit}
-          comment={`有機認証・グラスフェッド・少頭数育成の価値を守るブランド価格です（${formData.priceStrategy}戦略）。`}
+          comment={`直販・EC・ギフトの実売推奨価格です（${formData.priceStrategy}戦略）。有機認証・グラスフェッド・少頭数育成の付加価値を適正に反映した価格帯です。`}
         />
       </div>
 
