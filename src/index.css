@@ -825,13 +825,13 @@ body {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 8px;
-  padding: 6px 12px 4px;
-  background: transparent;
+  padding: 5px 12px;
+  background: #f7faf7;
   border-top: 1px dashed var(--color-border);
-  margin-top: 6px;
-  font-size: 0.75rem;
+  border-bottom: 1px dashed var(--color-border);
+  margin: 6px 0 2px;
+  font-size: 0.76rem;
   color: var(--color-muted);
-  opacity: 0.8;
 }
 .retail-ref-label {
   font-weight: 500;

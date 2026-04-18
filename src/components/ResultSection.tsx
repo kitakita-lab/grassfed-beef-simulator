@@ -60,8 +60,8 @@ function DirectPanel({ cp }: { cp: ChannelPrices }) {
             </tbody>
           </table>
         </div>
-        <p className="channel-detail-note">小売参考価格より10%安い設定（小売参考 × 0.90）</p>
         <RetailRefStrip cp={cp} />
+        <p className="channel-detail-note">小売参考価格より10%安い設定（小売参考 × 0.90）</p>
       </div>
     </div>
   );
@@ -111,8 +111,8 @@ function EventPanel({ cp }: { cp: ChannelPrices }) {
             </tbody>
           </table>
         </div>
-        <p className="channel-detail-note">小売参考価格 × 0.92 を元に算出し、100g心理価格（398・480・580…円）に丸めて表示</p>
         <RetailRefStrip cp={cp} />
+        <p className="channel-detail-note">小売参考価格 × 0.92 を元に算出し、100g心理価格（398・480・580…円）に丸めて表示</p>
       </div>
     </div>
   );
@@ -161,10 +161,10 @@ function FurusatoPanel({ cp }: { cp: ChannelPrices }) {
             ⚠️ 推奨寄付額が原価を下回っています。卸掛け率または利益設定を見直してください。
           </p>
         )}
-        <p className="furusato-note" style={{ margin: '8px 0 4px' }}>
+        <RetailRefStrip cp={cp} />
+        <p className="furusato-note" style={{ margin: '4px 0 4px' }}>
           ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
         </p>
-        <RetailRefStrip cp={cp} />
       </div>
     </div>
   );
