@@ -38,6 +38,9 @@ export const DEFAULT_FORM_DATA: FormData = {
   priceStrategy: '標準',
   roundingMode: '100円単位',
   wholesaleRate: 70,
+  directCoefficient: 90,
+  furusatoPlatformFeeRate: 25,
+  furusatoReturnRate: 30,
 };
 
 export const SAMPLE_FORM_DATA: FormData = {
@@ -69,6 +72,9 @@ export const SAMPLE_FORM_DATA: FormData = {
   priceStrategy: '標準',
   roundingMode: '100円単位',
   wholesaleRate: 70,
+  directCoefficient: 90,
+  furusatoPlatformFeeRate: 25,
+  furusatoReturnRate: 30,
 };
 
 export function saveToStorage(data: FormData, hasInteracted: boolean): void {

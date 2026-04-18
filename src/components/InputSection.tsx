@@ -160,6 +160,38 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             />
           </div>
         )}
+        {(formData.salesChannel === '直販' || formData.salesChannel === 'イベント販売') && (
+          <div className="wholesale-rate-field">
+            <NumField
+              label="直販・イベント基準係数"
+              hint="卸の想定小売価格に対する割合。例: 90 → 小売参考の90%。「店頭より少し安く、卸よりしっかり利益」の水準"
+              unit="%"
+              value={formData.directCoefficient}
+              step={5}
+              onChange={(v) => onChange('directCoefficient', v)}
+            />
+          </div>
+        )}
+        {formData.salesChannel === 'ふるさと納税' && (
+          <div className="wholesale-rate-field">
+            <NumField
+              label="プラットフォーム手数料率"
+              hint="さとふる・ふるなびなど。目安: 10〜30%"
+              unit="%"
+              value={formData.furusatoPlatformFeeRate}
+              step={5}
+              onChange={(v) => onChange('furusatoPlatformFeeRate', v)}
+            />
+            <NumField
+              label="目標還元率"
+              hint="返礼品価値 ÷ 寄附金額。法定上限50%。実態は30〜35%が多い"
+              unit="%"
+              value={formData.furusatoReturnRate}
+              step={5}
+              onChange={(v) => onChange('furusatoReturnRate', v)}
+            />
+          </div>
+        )}
       </Section>
 
       {/* B. 飼養コスト */}

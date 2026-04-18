@@ -51,6 +51,13 @@ export interface FormData {
 
   // H. 卸チャネル設定
   wholesaleRate: number; // 卸先掛け率（%）例: 70 → 70%
+
+  // I. 直販・イベント設定
+  directCoefficient: number; // 直販・イベント係数（%入力, 例: 90 → 想定小売の90%）
+
+  // J. ふるさと納税設定
+  furusatoPlatformFeeRate: number; // プラットフォーム手数料率（%入力, 例: 25）
+  furusatoReturnRate: number;      // 目標還元率（%入力, 例: 30、法定上限50%）
 }
 
 export type RetailPriceLevel = 'low' | 'normal' | 'premium' | 'ultra';
@@ -105,6 +112,78 @@ export interface CalculationResult {
   brandAnnualProfit: number;
 
   breakEvenPricePerKg: number;
+}
+
+export interface DirectResult {
+  coefficient: number;                   // 直販係数（小数, e.g. 0.90）
+  wholesaleRetailRefPerKg: number;       // 卸想定小売参考価格/kg（basis表示用）
+  minimumPricePerKg: number;
+  recommendedPricePerKg: number;
+  brandPricePerKg: number;
+  minimumPricePer100g: number;
+  recommendedPricePer100g: number;
+  brandPricePer100g: number;
+  minimumHeadPrice: number;
+  recommendedHeadPrice: number;
+  brandHeadPrice: number;
+  minimumProfit: number;
+  recommendedProfit: number;
+  brandProfit: number;
+  minimumProfitRate: number;
+  recommendedProfitRate: number;
+  brandProfitRate: number;
+  minimumAnnualRevenue: number;
+  recommendedAnnualRevenue: number;
+  brandAnnualRevenue: number;
+  minimumAnnualProfit: number;
+  recommendedAnnualProfit: number;
+  brandAnnualProfit: number;
+  wholesaleRecommendedProfit: number;    // 卸推奨利益（比較用）
+}
+
+export interface EventResult {
+  minimumPricePer100g: number;
+  recommendedPricePer100g: number;
+  brandPricePer100g: number;
+  minimumPricePerKg: number;
+  recommendedPricePerKg: number;
+  brandPricePerKg: number;
+  minimum300g: number;
+  recommended300g: number;
+  brand300g: number;
+  minimum500g: number;
+  recommended500g: number;
+  brand500g: number;
+  minimum1kg: number;
+  recommended1kg: number;
+  brand1kg: number;
+  minimumProfit: number;
+  recommendedProfit: number;
+  brandProfit: number;
+  minimumProfitRate: number;
+  recommendedProfitRate: number;
+  brandProfitRate: number;
+}
+
+export interface FurusatoResult {
+  returnRateDecimal: number;
+  platformFeeDecimal: number;
+  activeConstraint: 'returnRate' | 'platformFee';
+  minimumDonationPerHead: number;
+  recommendedDonationPerHead: number;
+  brandDonationPerHead: number;
+  minimum300g: number;
+  recommended300g: number;
+  brand300g: number;
+  minimum500g: number;
+  recommended500g: number;
+  brand500g: number;
+  minimum1kg: number;
+  recommended1kg: number;
+  brand1kg: number;
+  minimumAnnualRevenue: number;
+  recommendedAnnualRevenue: number;
+  brandAnnualRevenue: number;
 }
 
 export interface ValidationWarning {
