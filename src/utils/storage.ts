@@ -1,8 +1,7 @@
 import type { FormData } from '../types';
 
-// v2: formData と hasInteracted をまとめて保存する形式に変更
-// v1 のキーは別名なので自動的に無視される
-const STORAGE_KEY = 'grassfed_beef_simulator_v2';
+// v4: ふるさと納税詳細フィールド廃止。価格構造をシンプル化。
+const STORAGE_KEY = 'grassfed_beef_simulator_v4';
 
 interface StoredState {
   formData: Partial<FormData>;

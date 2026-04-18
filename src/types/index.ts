@@ -49,23 +49,8 @@ export interface FormData {
   // G. 丸め設定
   roundingMode: RoundingMode;
 
-  // H. 卸チャネル設定
+  // H. 卸掛け率（全チャネル価格の起点）
   wholesaleRate: number; // 卸先掛け率（%）例: 70 → 70%
-}
-
-export type RetailPriceLevel = 'low' | 'normal' | 'premium' | 'ultra';
-
-export interface WholesaleResult {
-  wholesaleRateDecimal: number;
-  retailerGrossMarginDecimal: number;
-  minimumRetailPricePerKg: number;
-  recommendedRetailPricePerKg: number;
-  brandRetailPricePerKg: number;
-  minimumRetailPricePer100g: number;
-  recommendedRetailPricePer100g: number;
-  brandRetailPricePer100g: number;
-  retailPriceLevel: RetailPriceLevel;
-  retailPriceComment: string;
 }
 
 export interface CalculationResult {
@@ -105,6 +90,75 @@ export interface CalculationResult {
   brandAnnualProfit: number;
 
   breakEvenPricePerKg: number;
+}
+
+// 卸価格（calculate()出力）を起点に全チャネル価格を保持
+// 小売 = 卸 ÷ 掛け率 / 直販 = 小売×0.90 / イベント = 小売×0.92→心理価格 / ふるさと = 小売×1.20
+export interface ChannelPrices {
+  wholesaleRateDecimal: number;
+
+  // 小売参考価格 /kg
+  retailMinPerKg: number;
+  retailRecPerKg: number;
+  retailBrandPerKg: number;
+
+  // 直販 /kg, /100g
+  directMinPerKg: number;
+  directRecPerKg: number;
+  directBrandPerKg: number;
+  directMinPer100g: number;
+  directRecPer100g: number;
+  directBrandPer100g: number;
+
+  // イベント /100g（心理価格）, /kg, パック
+  eventMinPer100g: number;
+  eventRecPer100g: number;
+  eventBrandPer100g: number;
+  eventMinPerKg: number;
+  eventRecPerKg: number;
+  eventBrandPerKg: number;
+  eventMin300g: number;
+  eventRec300g: number;
+  eventBrand300g: number;
+  eventMin500g: number;
+  eventRec500g: number;
+  eventBrand500g: number;
+  eventMin1kg: number;
+  eventRec1kg: number;
+  eventBrand1kg: number;
+
+  // ふるさと納税 /kg, パック（1,000円単位切上）
+  furusatoMinPerKg: number;
+  furusatoRecPerKg: number;
+  furusatoBrandPerKg: number;
+  furusatoMin500g: number;
+  furusatoRec500g: number;
+  furusatoBrand500g: number;
+  furusatoMin1kg: number;
+  furusatoRec1kg: number;
+  furusatoBrand1kg: number;
+  furusatoBelowCostWarning: boolean; // 推奨価格が原価を下回る場合 true
+
+  // 小売価格ベースの利益指標（メイン価格カード用）
+  retailMinHeadPrice: number;
+  retailRecHeadPrice: number;
+  retailBrandHeadPrice: number;
+  retailMinProfit: number;
+  retailRecProfit: number;
+  retailBrandProfit: number;
+  retailMinProfitRate: number;
+  retailRecProfitRate: number;
+  retailBrandProfitRate: number;
+  retailMinAnnualRevenue: number;
+  retailRecAnnualRevenue: number;
+  retailBrandAnnualRevenue: number;
+  retailMinAnnualProfit: number;
+  retailRecAnnualProfit: number;
+  retailBrandAnnualProfit: number;
+  // 卸価格（小売 × 掛け率）/kg
+  wholesaleMinPerKg: number;
+  wholesaleRecPerKg: number;
+  wholesaleBrandPerKg: number;
 }
 
 export interface ValidationWarning {
