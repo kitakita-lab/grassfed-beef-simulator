@@ -157,6 +157,9 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             step={5}
             onChange={(v) => onChange('wholesaleRate', v)}
           />
+          <p className="furusato-note">
+            ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
+          </p>
         </div>
       </Section>
 
