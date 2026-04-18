@@ -148,18 +148,16 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             ))}
           </div>
         </div>
-        {formData.salesChannel === '卸' && (
-          <div className="wholesale-rate-field">
-            <NumField
-              label="卸先掛け率（想定）"
-              hint="卸価格 ÷ 想定小売価格。食品卸の一般的な目安: 65〜75%"
-              unit="%"
-              value={formData.wholesaleRate}
-              step={5}
-              onChange={(v) => onChange('wholesaleRate', v)}
-            />
-          </div>
-        )}
+        <div className="wholesale-rate-field">
+          <NumField
+            label="卸先掛け率（想定）"
+            hint="卸チャネル価格の算出に使用。卸価格 = 小売参考価格 × 掛け率。食品卸の目安: 65〜75%"
+            unit="%"
+            value={formData.wholesaleRate}
+            step={5}
+            onChange={(v) => onChange('wholesaleRate', v)}
+          />
+        </div>
       </Section>
 
       {/* B. 飼養コスト */}
@@ -351,7 +349,7 @@ export default function InputSection({ formData, onChange, warnings, hasInteract
             ))}
           </div>
           <p className="text-muted text-small" style={{ marginTop: 8 }}>
-            推奨価格に対する係数で、ブランド価格を算出します。
+            推奨卸価格に係数を乗じてブランド卸価格を算出します。全チャネルの最上位価格帯として使用します。
           </p>
         </div>
       </Section>

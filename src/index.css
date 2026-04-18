@@ -187,6 +187,146 @@ body {
 .wholesale-comment.premium { background: #eef5fc; border-color: #2980b9; color: #1a4a6b; }
 .wholesale-comment.ultra   { background: #fdf8ec; border-color: var(--color-gold); color: #7a5c00; }
 
+/* ─── チャネル別パネル（共通基盤） ─── */
+.channel-panel {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.channel-panel-header {
+  padding: 12px 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.channel-panel-header.wholesale { background: #fdf5d8; border-bottom: 1px solid #e8d898; color: #7a5c00; border: 1.5px solid #d4b860; border-bottom: none; }
+.channel-panel-header.direct    { background: #edf6ed; border-bottom: 1px solid #b8d8bb; color: var(--color-primary-dk); }
+.channel-panel-header.event     { background: #f0eef8; border-bottom: 1px solid #c8beec; color: #4a3a80; }
+.channel-panel-header.furusato  { background: #fdeef4; border-bottom: 1px solid #ecb8cc; color: #7a2050; }
+
+.wholesale-panel { border: 1.5px solid #d4b860; }
+.direct-panel    { border: 1.5px solid #7ab87e; }
+.event-panel     { border: 1.5px solid #9a8ed0; }
+.furusato-panel  { border: 1.5px solid #d880a0; }
+
+.channel-basis-badge {
+  font-size: 0.72rem;
+  font-weight: 400;
+  opacity: 0.85;
+  background: rgba(255,255,255,0.55);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.channel-panel-meta {
+  padding: 8px 18px 6px;
+  font-size: 0.81rem;
+  color: var(--color-muted);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.channel-meta-item strong { color: var(--color-text); }
+
+.furusato-constraint { color: var(--color-muted); font-style: italic; }
+
+/* ─── 直販基準バナー ─── */
+.direct-basis-banner {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-primary-dk);
+  background: #edf6ed;
+  border: 1.5px solid #7ab87e;
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ─── チャネル切り替え説明ノート ─── */
+.channel-note {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  background: #f4f1eb;
+  border-left: 3px solid var(--color-border);
+  border-radius: 0 6px 6px 0;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* ─── イベント販売パッケージグリッド ─── */
+.event-package-grid {
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-package-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.event-package-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  min-width: 80px;
+}
+
+.event-package-prices {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.event-pkg-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8f6f1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: 72px;
+  flex: 1;
+}
+
+.event-pkg-tier {
+  font-size: 0.68rem;
+  color: var(--color-muted);
+  margin-bottom: 2px;
+}
+
+.event-pkg-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* ─── ふるさと納税補足ノート ─── */
+.furusato-note {
+  margin: 4px 18px 14px;
+  padding: 9px 13px;
+  background: #fdf4f8;
+  border-radius: 7px;
+  font-size: 0.79rem;
+  line-height: 1.65;
+  color: #5a3050;
+}
+
 /* ─── Guide card (初期未入力状態) ─── */
 .guide-card {
   background: linear-gradient(135deg, #f0f7f1 0%, #f8f6f1 100%);
@@ -578,6 +718,19 @@ body {
 .annual-table .col-min   { color: var(--color-min); }
 .annual-table .col-rec   { color: var(--color-rec); }
 .annual-table .col-brand { color: var(--color-brand); }
+.annual-table .channel-section-row td {
+  background: #f0f4f8;
+  color: #3a4a5a;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border-top: 1px solid #c8d4e0;
+}
+.annual-table .channel-section-row.furusato-warn td {
+  background: #fff3f0;
+  color: #c0392b;
+  border-top: 1px solid #f5c6bc;
+}
 
 /* ─── Channel hints ─── */
 .hints-card {
