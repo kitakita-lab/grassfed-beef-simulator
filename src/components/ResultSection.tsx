@@ -11,20 +11,28 @@ interface Props {
   result: CalculationResult | null;
 }
 
-// ─── チャネル別価格テーブル ───────────────────────────────────────────────────
-// 小売参考価格（基準）→ 直販 / イベント / ふるさと納税 / 卸 の順で派生を表示
-function ChannelPriceTable({
-  cp,
-  wholesaleRate,
-}: {
-  cp: ChannelPrices;
-  wholesaleRate: number;
-}) {
+// ─── 小売参考価格バー（常時表示・補助） ────────────────────────────────────
+function RetailRefStrip({ cp }: { cp: ChannelPrices }) {
+  return (
+    <div className="retail-ref-strip">
+      <span className="retail-ref-label">📍 小売参考（基準）</span>
+      <span className="retail-ref-values">
+        <span className="col-min">最低 {formatCurrency(cp.retailMinPerKg)}</span>
+        {' ／ '}
+        <span className="col-rec">推奨 {formatCurrency(cp.retailRecPerKg)}</span>
+        {' ／ '}
+        <span className="col-brand">ブランド {formatCurrency(cp.retailBrandPerKg)}</span>
+        {' /kg'}
+      </span>
+    </div>
+  );
+}
+
+// ─── 直販チャネルパネル ────────────────────────────────────────────────────
+function DirectPanel({ cp }: { cp: ChannelPrices }) {
   return (
     <div className="summary-card">
-      <div className="summary-header">
-        <span>💹</span> チャネル別価格一覧（小売参考価格から全チャネル派生）
-      </div>
+      <div className="summary-header"><span>🏠</span> 直販・EC・ギフト価格</div>
       <div className="summary-body" style={{ padding: '0 4px 4px' }}>
         <div className="annual-table-scroll">
           <table className="annual-table">
@@ -37,19 +45,6 @@ function ChannelPriceTable({
               </tr>
             </thead>
             <tbody>
-              <tr className="channel-section-row">
-                <td colSpan={4}>🏪 小売参考価格（基準）</td>
-              </tr>
-              <tr>
-                <td>小売参考 /kg</td>
-                <td className="col-min">{formatCurrency(cp.retailMinPerKg)}</td>
-                <td className="col-rec">{formatCurrency(cp.retailRecPerKg)}</td>
-                <td className="col-brand">{formatCurrency(cp.retailBrandPerKg)}</td>
-              </tr>
-
-              <tr className="channel-section-row">
-                <td colSpan={4}>🏠 直販・EC・ギフト（小売×0.90）</td>
-              </tr>
               <tr>
                 <td>直販価格 /kg</td>
                 <td className="col-min">{formatCurrency(cp.directMinPerKg)}</td>
@@ -62,12 +57,35 @@ function ChannelPriceTable({
                 <td className="col-rec">{formatCurrency(cp.directRecPer100g)}</td>
                 <td className="col-brand">{formatCurrency(cp.directBrandPer100g)}</td>
               </tr>
+            </tbody>
+          </table>
+        </div>
+        <RetailRefStrip cp={cp} />
+        <p className="channel-detail-note">小売参考価格より10%安い設定（小売参考 × 0.90）</p>
+      </div>
+    </div>
+  );
+}
 
-              <tr className="channel-section-row">
-                <td colSpan={4}>🎪 イベント販売（小売×0.92 → 100g心理価格）</td>
-              </tr>
+// ─── イベント販売チャネルパネル ────────────────────────────────────────────
+function EventPanel({ cp }: { cp: ChannelPrices }) {
+  return (
+    <div className="summary-card">
+      <div className="summary-header"><span>🎪</span> イベント販売価格</div>
+      <div className="summary-body" style={{ padding: '0 4px 4px' }}>
+        <div className="annual-table-scroll">
+          <table className="annual-table">
+            <thead>
               <tr>
-                <td>100g単価</td>
+                <th>項目</th>
+                <th className="col-min">🔴 最低</th>
+                <th className="col-rec">🔵 推奨</th>
+                <th className="col-brand">🟡 ブランド</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>100g単価（心理価格）</td>
                 <td className="col-min">{formatCurrency(cp.eventMinPer100g)}</td>
                 <td className="col-rec">{formatCurrency(cp.eventRecPer100g)}</td>
                 <td className="col-brand">{formatCurrency(cp.eventBrandPer100g)}</td>
@@ -90,15 +108,35 @@ function ChannelPriceTable({
                 <td className="col-rec">{formatCurrency(cp.eventRec1kg)}</td>
                 <td className="col-brand">{formatCurrency(cp.eventBrand1kg)}</td>
               </tr>
+            </tbody>
+          </table>
+        </div>
+        <RetailRefStrip cp={cp} />
+        <p className="channel-detail-note">小売参考価格 × 0.92 を元に算出し、100g心理価格（398・480・580…円）に丸めて表示</p>
+      </div>
+    </div>
+  );
+}
 
-              <tr className={`channel-section-row${cp.furusatoBelowCostWarning ? ' furusato-warn' : ''}`}>
-                <td colSpan={4}>
-                  🎁 ふるさと納税（小売×1.20・1,000円切上）
-                  {cp.furusatoBelowCostWarning && ' ⚠️ 推奨価格が原価を下回っています'}
-                </td>
-              </tr>
+// ─── ふるさと納税チャネルパネル ────────────────────────────────────────────
+function FurusatoPanel({ cp }: { cp: ChannelPrices }) {
+  return (
+    <div className="summary-card">
+      <div className="summary-header"><span>🎁</span> ふるさと納税 寄付額目安</div>
+      <div className="summary-body" style={{ padding: '0 4px 4px' }}>
+        <div className="annual-table-scroll">
+          <table className="annual-table">
+            <thead>
               <tr>
-                <td>ふるさと /kg</td>
+                <th>項目</th>
+                <th className="col-min">🔴 最低</th>
+                <th className="col-rec">🔵 推奨</th>
+                <th className="col-brand">🟡 ブランド</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>寄付額目安 /kg</td>
                 <td className="col-min">{formatCurrency(cp.furusatoMinPerKg)}</td>
                 <td className="col-rec">{formatCurrency(cp.furusatoRecPerKg)}</td>
                 <td className="col-brand">{formatCurrency(cp.furusatoBrandPerKg)}</td>
@@ -115,32 +153,80 @@ function ChannelPriceTable({
                 <td className="col-rec">{formatCurrency(cp.furusatoRec1kg)}</td>
                 <td className="col-brand">{formatCurrency(cp.furusatoBrand1kg)}</td>
               </tr>
-              <tr>
-                <td colSpan={4} style={{ padding: '6px 8px 10px' }}>
-                  <p className="furusato-note" style={{ margin: 0 }}>
-                    ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
-                  </p>
-                </td>
-              </tr>
+            </tbody>
+          </table>
+        </div>
+        {cp.furusatoBelowCostWarning && (
+          <p className="channel-detail-note" style={{ color: '#c0392b' }}>
+            ⚠️ 推奨寄付額が原価を下回っています。卸掛け率または利益設定を見直してください。
+          </p>
+        )}
+        <RetailRefStrip cp={cp} />
+        <p className="furusato-note" style={{ margin: '4px 0 4px' }}>
+          ※ ふるさと納税の寄付額は、小売参考価格を基準にした簡易係数（×1.20）による目安表示です。実際の寄付額設計は、返礼率・ポータル手数料・送料・梱包費・自治体条件により変動します。
+        </p>
+      </div>
+    </div>
+  );
+}
 
-              <tr className="channel-section-row">
-                <td colSpan={4}>🏭 卸価格（小売×{wholesaleRate}%）</td>
+// ─── 卸チャネルパネル ──────────────────────────────────────────────────────
+function WholesalePanel({ cp }: { cp: ChannelPrices }) {
+  const rateLabel = `${(cp.wholesaleRateDecimal * 100).toFixed(0)}%`;
+  return (
+    <div className="summary-card">
+      <div className="summary-header"><span>🏭</span> 卸価格</div>
+      <div className="summary-body" style={{ padding: '0 4px 4px' }}>
+        <div className="annual-table-scroll">
+          <table className="annual-table">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th className="col-min">🔴 最低</th>
+                <th className="col-rec">🔵 推奨</th>
+                <th className="col-brand">🟡 ブランド</th>
               </tr>
+            </thead>
+            <tbody>
               <tr>
                 <td>卸価格 /kg</td>
                 <td className="col-min">{formatCurrency(cp.wholesaleMinPerKg)}</td>
                 <td className="col-rec">{formatCurrency(cp.wholesaleRecPerKg)}</td>
                 <td className="col-brand">{formatCurrency(cp.wholesaleBrandPerKg)}</td>
               </tr>
+              <tr>
+                <td>想定卸先小売参考 /kg</td>
+                <td className="col-min">{formatCurrency(cp.retailMinPerKg)}</td>
+                <td className="col-rec">{formatCurrency(cp.retailRecPerKg)}</td>
+                <td className="col-brand">{formatCurrency(cp.retailBrandPerKg)}</td>
+              </tr>
+              <tr>
+                <td>想定卸先小売参考 /100g</td>
+                <td className="col-min">{formatCurrency(cp.retailMinPerKg / 10)}</td>
+                <td className="col-rec">{formatCurrency(cp.retailRecPerKg / 10)}</td>
+                <td className="col-brand">{formatCurrency(cp.retailBrandPerKg / 10)}</td>
+              </tr>
             </tbody>
           </table>
         </div>
+        <p className="channel-detail-note">卸価格 = 小売参考価格 × 卸掛け率（{rateLabel}）</p>
       </div>
     </div>
   );
 }
 
-// ─── 価格カード ───────────────────────────────────────────────────────────────
+// ─── チャネル別パネル ディスパッチャー ────────────────────────────────────
+function ChannelDetailPanel({ cp, salesChannel }: { cp: ChannelPrices; salesChannel: string }) {
+  switch (salesChannel) {
+    case '直販':       return <DirectPanel cp={cp} />;
+    case 'イベント販売': return <EventPanel cp={cp} />;
+    case 'ふるさと納税': return <FurusatoPanel cp={cp} />;
+    case '卸':         return <WholesalePanel cp={cp} />;
+    default:           return <DirectPanel cp={cp} />;
+  }
+}
+
+// ─── 価格カード ───────────────────────────────────────────────────────────
 function PriceCard({
   tier,
   headPrice,
@@ -327,8 +413,8 @@ export default function ResultSection({ formData, result }: Props) {
         />
       </div>
 
-      {/* チャネル別価格テーブル */}
-      <ChannelPriceTable cp={cp} wholesaleRate={formData.wholesaleRate} />
+      {/* 選択中チャネルの価格パネル */}
+      <ChannelDetailPanel cp={cp} salesChannel={formData.salesChannel} />
 
       {/* コスト内訳 */}
       <div className="summary-card">

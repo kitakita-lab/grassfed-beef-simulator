@@ -819,8 +819,38 @@ body {
 .text-muted { color: var(--color-muted); }
 .text-small { font-size: 0.8rem; }
 
+/* ─── Channel detail panel ─── */
+.retail-ref-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 5px 12px 4px;
+  background: #f7faf7;
+  border-top: 1px dashed var(--color-border);
+  border-radius: 0 0 4px 4px;
+  margin: 6px 0 2px;
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+.retail-ref-label {
+  font-weight: 500;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.retail-ref-values {
+  color: var(--color-muted);
+}
+.channel-detail-note {
+  margin: 8px 4px 4px;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
 @media (max-width: 480px) {
   .field-row { grid-template-columns: 1fr; }
   .price-main { font-size: 1.7rem; }
   .annual-table th, .annual-table td { padding: 6px 6px; font-size: 0.78rem; }
+  .retail-ref-strip { flex-direction: column; gap: 2px; }
 }
